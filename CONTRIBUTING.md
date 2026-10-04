@@ -45,7 +45,7 @@ bash Scripts/build_app.sh
 
 ## Questions?
 
-Feel free to open an issue or discussion if you're unsure about anything!
+Feel free to open an [issue](https://github.com/Zer0codestuff/OpenNaga/issues/new) if you're unsure about anything.
 
 ## License
 

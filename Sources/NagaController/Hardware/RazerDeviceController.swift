@@ -99,8 +99,7 @@ final class RazerDeviceController {
             let message: String
             let recoveryPending: Bool
         }
-        private let journalURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("NagaController/driver-mode-recovery.json")
+        private let journalURL = DataFolder.file("driver-mode-recovery.json")
         private var modeChangedThisSession = false
 
         fileprivate func perform(_ operation: Operation) -> Outcome {

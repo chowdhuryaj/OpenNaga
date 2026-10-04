@@ -1,5 +1,8 @@
 import Cocoa
 
+// Before anything reads profiles or the mouse backup.
+DataFolder.importLegacyFilesIfNeeded()
+
 let arguments = CommandLine.arguments
 if arguments.contains("--save-onboard-profile") || arguments.contains("--restore-onboard-profile") || arguments.contains("--inspect-onboard") || arguments.contains("--diagnose") || arguments.contains("--diagnose-file") || arguments.contains("--verify-hardware") {
     var output: URL?

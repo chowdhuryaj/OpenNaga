@@ -323,8 +323,7 @@ final class ConfigManager {
 
     private func userProfilesURL() throws -> URL {
         if let storageURL { return storageURL }
-        let appSupport = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return appSupport.appendingPathComponent("NagaController/profiles.json")
+        return DataFolder.file("profiles.json")
     }
 
 }

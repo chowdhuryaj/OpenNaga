@@ -38,8 +38,7 @@ final class MacRazerUSBTransport: RazerTransport {
             throw RazerHardwareError.transport("USB interface missing or ambiguous. Connect a single Naga V2 HyperSpeed receiver.")
         }
         // Serialize full sessions across diagnostic and GUI processes as well.
-        let lockURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("NagaController/hardware.lock")
+        let lockURL = DataFolder.file("hardware.lock")
         try FileManager.default.createDirectory(at: lockURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         let fd = Darwin.open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
         guard fd >= 0 else { throw RazerHardwareError.transport("Could not reserve communication with the mouse.") }

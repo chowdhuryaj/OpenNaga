@@ -31,7 +31,7 @@ OpenNaga is an independent project, not affiliated with or endorsed by Razer. It
 
 ## Install and first run
 
-1. Download `OpenNaga-v2.3.0.dmg` from the [latest release](https://github.com/Zer0codestuff/OpenNaga/releases/latest), or build the app bundle (see below).
+1. Download `OpenNaga-v2.4.0.dmg` from the [latest release](https://github.com/Zer0codestuff/OpenNaga/releases/latest), or build the app bundle (see below).
 2. Open the DMG and drag `OpenNaga.app` to Applications. Permissions are tied to the app location, so do not move it afterwards.
 3. The release is not notarized. On first launch right-click the app and choose Open, or run `xattr -dr com.apple.quarantine /Applications/OpenNaga.app`.
 4. Launch it. macOS prompts for two permissions; both are required:
@@ -39,7 +39,7 @@ OpenNaga is an independent project, not affiliated with or endorsed by Razer. It
    - Input Monitoring (System Settings > Privacy & Security > Input Monitoring)
 5. Open the settings window from the menu bar icon, turn on "Remapping", and assign actions.
 
-Upgrading from NagaController 2.x: quit it, delete `/Applications/NagaController.app`, then install OpenNaga. Your profiles are kept. macOS may ask for the two permissions again.
+Upgrading from 2.3.0 or earlier, including the builds named NagaController 2.x: quit the old app and replace it in Applications with `OpenNaga.app`. On first launch OpenNaga copies your profiles and mouse backup from `~/Library/Application Support/NagaController` into `~/Library/Application Support/OpenNaga` and leaves the old folder as it is. macOS may ask for the two permissions again.
 
 The Status section shows the current permission state, the detected device, and the last input seen. If a permission was granted after launch, macOS may require restarting the app.
 
@@ -169,7 +169,9 @@ open -n OpenNaga.app --args --restore-onboard-profile --diagnose-file /tmp/naga-
 
 ## Project structure
 
-The Swift package, target and source folder keep the internal name `NagaController`, as do the bundle identifier and the `~/Library/Application Support/NagaController` folder, so existing permissions and profiles carry over.
+The Swift package, target and source folder keep the internal name `NagaController`, as does the bundle identifier, so existing permissions carry over.
+
+Profiles, the mouse backup and the driver mode journal live in `~/Library/Application Support/OpenNaga`. Up to 2.3.0 OpenNaga shared the `NagaController` folder with [NagaController](https://github.com/DParent10/NagaController). Since 2.4.0 it reads that folder once to import older data and never writes to it, so the two apps no longer overwrite each other's profiles.
 
 - `Sources/NagaController/ButtonMapping/` action model, event synthesis, layout-aware browser shortcuts
 - `Sources/NagaController/EventTap/` CGEvent tap and correlation with HID input
@@ -183,4 +185,4 @@ The Swift package, target and source folder keep the internal name `NagaControll
 
 ## Credits and license
 
-OpenNaga started as a fork of [NagaController](https://github.com/DParent10/NagaController) by DParent10, also MIT licensed. Protocol facts come from the published OpenRazer sources and pull request 2850; no GPL code is included. Code is licensed under MIT, see [LICENSE](LICENSE). Mouse image provenance is documented in [Resources/Mouse/README.md](Resources/Mouse/README.md).
+OpenNaga started as a fork of [NagaController](https://github.com/DParent10/NagaController) by DParent10, also MIT licensed. Protocol facts come from the published OpenRazer driver sources, pull request 2850 and issues 2845 and 2031, and from the OpenSnek protocol notes. The Swift code was written from those wire formats and checked on a real receiver; no OpenRazer or other GPL code is included. Each file in `Sources/NagaController/Hardware/` lists its references. Code is licensed under MIT, see [LICENSE](LICENSE). Mouse image provenance is documented in [Resources/Mouse/README.md](Resources/Mouse/README.md).

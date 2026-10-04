@@ -8,10 +8,7 @@ enum OnboardProfileStore {
         var name: String
         var pending: Bool
     }
-    static var url: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("NagaController/onboard-profile.json")
-    }
+    static var url: URL { DataFolder.file("onboard-profile.json") }
     // A pending or unreadable journal also blocks software interception after a crash.
     static var isActive: Bool { FileManager.default.fileExists(atPath: url.path) }
     static var savedName: String? {
