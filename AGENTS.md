@@ -44,6 +44,7 @@ open -n OpenNaga.app --args --inspect-onboard --diagnose-file /tmp/o.json   # re
 
 ## Recent changes
 
+- 2026-10-04: README gained a `How it compares` table (OpenNaga, NagaController, SteerMouse) and a note on Razer Synapse for Mac, built from each project's own pages. The "5.7.2, USB connection only" note that search engines attribute to Synapse is from the SteerMouse release notes; Synapse for Mac still does not list this mouse. Recheck those pages before editing the table. Comments linking the repo were posted on Reddit and on `1kc/razer-macos` issues 739 and 926.
 - 2.3.0: onboard memory. `Save to Mouse…` button next to the profile picker and `Mouse Memory…` menu item open `OnboardProfilePane`. Saving is explicit only (never on edit, profile switch, startup, refresh or quit). While a saved profile is active, software interception and driver mode are disabled; restoring the backup re-enables them. DPI up/down mouse actions exist only as hardware functions (software mapper ignores them). Onboard buttons 4/5 stay standard mouse buttons (user choice, for games). Backup identity now compares vendor:product only, because moving the dongle to another hub/port blocked save and restore.
 - 2.2.0: rename to OpenNaga and English UI. Persisted identifiers unchanged; the default profile `Navigazione` became `Navigation`.
 - 2.1.x: Bluetooth identity `068e:00b5` detection, System actions catalog (25 functions), native UI with mouse photo targets, keyboard key picker, background and hotplug fixes.

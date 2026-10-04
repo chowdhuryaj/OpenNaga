@@ -87,6 +87,25 @@ Screenshots, Mission Control and space navigation use the keyboard shortcuts con
 
 Brightness uses the Mac's brightness keys, so an external monitor must support brightness control through macOS. Media controls target the active playback app. Focus settings may sync Do Not Disturb to other Apple devices.
 
+## How it compares
+
+Other ways to configure a Naga V2 HyperSpeed on a Mac:
+
+| | OpenNaga | NagaController | SteerMouse |
+| --- | --- | --- | --- |
+| Price | Free | Free | US$19.99, 30-day trial |
+| Open source | Yes, MIT | Yes, MIT | No |
+| Naga V2 HyperSpeed | Yes | Yes | Since 5.7.2, USB receiver only |
+| 12 side buttons | Remapped | Remapped | Remapped |
+| Profile saved in the mouse | Yes | Not listed | Not listed |
+| DPI and polling rate | Yes, over the USB receiver | Not listed | Cursor speed in software |
+
+Razer Synapse for Mac does not support this mouse; owners are still asking for it on [Razer Insider](https://insider.razer.com/razer-synapse-for-mac-preview-61/naga-v2-hyperspeed-support-in-synapse-preview-78820). The usual workaround is to configure the mouse in Synapse on a Windows PC and carry the onboard profile over.
+
+[NagaController](https://github.com/DParent10/NagaController) is the project OpenNaga started from. It is still maintained and has Hypershift layers. [SteerMouse](https://plentycom.jp/en/steermouse/) works with mice from many brands and has per-application profiles. OpenNaga has neither.
+
+Details for the other apps come from their own pages and the [SteerMouse release notes](https://plentycom.jp/en/steermouse/download.php), checked in October 2026.
+
 ## Build from source
 
 ```bash
