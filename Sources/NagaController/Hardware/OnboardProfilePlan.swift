@@ -3,8 +3,10 @@ import Cocoa
 struct OnboardProfilePlan {
     let name: String
     var functions: [UInt8: [UInt8]] = [:]
+    /// Layer 1 (Hypershift). Unset buttons are not written.
+    var hypershiftFunctions: [UInt8: [UInt8]] = [:]
     var issues: [String] = []
-    var isSupported: Bool { !functions.isEmpty && issues.isEmpty }
+    var isSupported: Bool { !(functions.isEmpty && hypershiftFunctions.isEmpty) && issues.isEmpty }
 
     // Grid IDs increase with the printed button numbers, not enumeration order.
     static let buttonIDs: [Int: UInt8] = Dictionary(uniqueKeysWithValues:
@@ -13,16 +15,26 @@ struct OnboardProfilePlan {
          // 20 to 22 exist only on the V3 Pro (1532:00e7); a V2 save skips them.
          (20, 0x6a), (21, 0x39), (22, 0x80)])
 
-    init(name: String, mapping: [Int: ActionType]) {
+    init(name: String, mapping: [Int: ActionType], hypershift: [Int: ActionType] = [:]) {
         self.name = name
-        for index in mapping.keys.sorted() {
-            guard let id = Self.buttonIDs[index], let action = mapping[index] else {
-                issues.append("Button \(index): unknown hardware control."); continue
+        for (layer, buttons) in [(0, mapping), (1, hypershift)] {
+            let prefix = layer == 0 ? "Button" : "Hypershift button"
+            for index in buttons.keys.sorted() {
+                guard let id = Self.buttonIDs[index], let action = buttons[index] else {
+                    issues.append("\(prefix) \(index): unknown hardware control."); continue
+                }
+                // The Hypershift block is verified only on the ring-finger control 0x39.
+                if case .mouse(.hypershift, _) = action, layer == 1 || index != 21 {
+                    issues.append("\(prefix) \(index): " + (layer == 1 ? "Hypershift cannot be used inside the Hypershift layer."
+                                                                       : "Hypershift is only supported on the ring-finger button.")); continue
+                }
+                do {
+                    let function = try Self.function(action)
+                    if layer == 0 { functions[id] = function } else { hypershiftFunctions[id] = function }
+                } catch { issues.append("\(prefix) \(index): \(error.localizedDescription)") }
             }
-            do { functions[id] = try Self.function(action) }
-            catch { issues.append("Button \(index): \(error.localizedDescription)") }
         }
-        if mapping.isEmpty { issues.append("The profile is empty.") }
+        if mapping.isEmpty && hypershift.isEmpty { issues.append("The profile is empty.") }
     }
 
     private static func unsupported(_ text: String) -> RazerHardwareError { .invalidValue(text) }
@@ -42,6 +54,7 @@ struct OnboardProfilePlan {
             switch mouse {
             case .dpiUp: return [6, 1, 1, 0, 0, 0, 0]
             case .dpiDown: return [6, 1, 2, 0, 0, 0, 0]
+            case .hypershift: return [0x0c, 1, 0x39, 0, 0, 0, 0]
             case .leftClick: return [1, 1, 1, 0, 0, 0, 0]
             case .rightClick: return [1, 1, 2, 0, 0, 0, 0]
             case .middleClick: return [1, 1, 3, 0, 0, 0, 0]

@@ -30,10 +30,13 @@ enum NagaDiagnostics {
             guard !(saveOnboard && restoreOnboard) else { throw RazerHardwareError.invalidValue("Choose either save or restore.") }
             if saveOnboard {
                 ConfigManager.shared.load()
-                let plan = OnboardProfilePlan(name: ConfigManager.shared.currentProfileName, mapping: ConfigManager.shared.mappingForCurrentProfile())
+                let config = ConfigManager.shared
+                let plan = OnboardProfilePlan(name: config.currentProfileName, mapping: config.mappingForCurrentProfile(),
+                                              hypershift: config.mappingForCurrentProfile(layer: 1))
                 report["profile"] = plan.name
                 report["planIssues"] = plan.issues
                 report["skippedButtons"] = try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
+                report["hypershiftSkipped"] = OnboardProfileStore.skipsHypershift(plan, identity: transport.identity)
                 report["onboardSaveVerified"] = true
             }
             if restoreOnboard {
@@ -43,6 +46,9 @@ enum NagaDiagnostics {
             if inspectOnboard || saveOnboard || restoreOnboard {
                 report["onboardActive"] = try RazerOnboardBindings.read(session: session, profile: 0).map(\.bytes)
                 report["onboardStored"] = try RazerOnboardBindings.read(session: session, profile: 1).map(\.bytes)
+                if RazerOnboardBindings.hasHypershift(identity: transport.identity) {
+                    report["onboardStoredHypershift"] = try RazerOnboardBindings.read(session: session, profile: 1, layer: 1).map(\.bytes)
+                }
                 report["onboardReadVerified"] = true
             }
             if verifyWrites {

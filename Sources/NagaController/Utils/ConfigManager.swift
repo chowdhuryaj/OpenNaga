@@ -17,6 +17,8 @@ struct Settings: Codable {
 
 struct Profile: Codable {
     var buttons: [String: ButtonAction]
+    /// Hypershift layer for mouse memory only. Nil (omitted in JSON) when empty.
+    var hypershift: [String: ButtonAction]?
 }
 
 struct ButtonAction: Codable {
@@ -122,10 +124,11 @@ final class ConfigManager {
         return Array(profiles.keys).sorted()
     }
 
-    func mappingForCurrentProfile() -> [Int: ActionType] {
+    /// Layer 0 is the normal layer (software remapping uses only this one), 1 is Hypershift.
+    func mappingForCurrentProfile(layer: Int = 0) -> [Int: ActionType] {
         guard let profile = profiles[currentProfileName] else { return [:] }
         var result: [Int: ActionType] = [:]
-        for (key, action) in profile.buttons {
+        for (key, action) in layer == 0 ? profile.buttons : profile.hypershift ?? [:] {
             if let idx = Int(key), (1...22).contains(idx), let mapped = convert(action: action) {
                 result[idx] = mapped
             }
@@ -285,15 +288,17 @@ final class ConfigManager {
     }
 
     // Update a single button's action in the current profile and refresh mapping
-    func setAction(forButton index: Int, action: ActionType?) {
+    func setAction(forButton index: Int, action: ActionType?, layer: Int = 0) {
         guard (1...22).contains(index) else { return }
         var profile = profiles[currentProfileName] ?? Profile(buttons: [:])
         let key = String(index)
+        var buttons = layer == 0 ? profile.buttons : profile.hypershift ?? [:]
         if let action = action {
-            profile.buttons[key] = toButtonAction(action)
+            buttons[key] = toButtonAction(action)
         } else {
-            profile.buttons.removeValue(forKey: key)
+            buttons.removeValue(forKey: key)
         }
+        if layer == 0 { profile.buttons = buttons } else { profile.hypershift = buttons.isEmpty ? nil : buttons }
         profiles[currentProfileName] = profile
         ButtonMapper.shared.updateMapping(mappingForCurrentProfile())
         saveUserProfiles()

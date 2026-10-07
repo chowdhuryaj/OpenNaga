@@ -9,6 +9,10 @@ final class WorkspaceModel: ObservableObject {
     @Published var profile = ""
     @Published var profiles: [String] = []
     @Published var mapping: [Int: ActionType] = [:]
+    @Published var hypershiftMapping: [Int: ActionType] = [:]
+    /// Layer shown and edited in the button editor: 0 normal, 1 Hypershift.
+    @Published var layer = 0
+    var editedMapping: [Int: ActionType] { layer == 0 ? mapping : hypershiftMapping }
     @Published var onboardActive = false
     @Published var onboardName: String?
     @Published var remappingActive = false
@@ -53,6 +57,7 @@ final class WorkspaceModel: ObservableObject {
         profile = config.currentProfileName
         profiles = config.availableProfiles()
         mapping = config.mappingForCurrentProfile()
+        hypershiftMapping = config.mappingForCurrentProfile(layer: 1)
         error = config.lastError
         deviceName = HIDListener.shared.connectedDeviceName ?? "No mouse detected"
         onboardActive = OnboardProfileStore.isActive
@@ -82,7 +87,7 @@ final class WorkspaceModel: ObservableObject {
     }
 
     func save(_ action: ActionType?, button: Int) {
-        ConfigManager.shared.setAction(forButton: button, action: action)
+        ConfigManager.shared.setAction(forButton: button, action: action, layer: layer)
         refresh()
     }
 

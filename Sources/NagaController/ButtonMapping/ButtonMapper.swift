@@ -20,7 +20,7 @@ final class ButtonMapper {
     }
 
     func hasMapping(buttonIndex: Int) -> Bool {
-        if case .mouse(let action, _) = mapping[buttonIndex], action == .dpiUp || action == .dpiDown { return false }
+        if case .mouse(let action, _) = mapping[buttonIndex], action.isHardwareOnly { return false }
         return mapping[buttonIndex] != nil
     }
 

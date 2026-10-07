@@ -42,9 +42,13 @@ struct ActionInspector: View {
             }
             HStack(spacing: 5) {
                 Image(systemName: "checkmark.circle")
-                Text(model.mapping[button]?.displayName ?? "Original function")
+                Text(model.editedMapping[button]?.displayName ?? "Original function")
                     .lineLimit(2)
             }.font(.callout).foregroundStyle(.secondary)
+            if model.layer == 1 {
+                Label("Hypershift actions work only from mouse memory (Save to Mouse).", systemImage: "memorychip")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
             if (18...19).contains(button) {
                 Label("Keep a primary click available so you can still use the Mac.", systemImage: "exclamationmark.triangle")
                     .font(.callout).foregroundStyle(.orange)
@@ -69,7 +73,7 @@ struct ActionInspector: View {
         .textFieldStyle(.roundedBorder)
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear { load() }
-        .onChange(of: model.mapping[button]) { _ in
+        .onChange(of: model.editedMapping[button]) { _ in
             if !recording { load() }
         }
         .onDisappear { recording = false }
@@ -97,7 +101,9 @@ struct ActionInspector: View {
             Picker("Function", selection: Binding(get: { mouse }, set: { mouse = $0; persist() })) {
                 ForEach(MouseAction.allCases, id: \.rawValue) { Text($0.title).tag($0) }
             }
-            Text(mouse == .dpiUp || mouse == .dpiDown
+            Text(mouse == .hypershift
+                 ? "Onboard only, ring-finger button only: choose Save to Mouse to apply it. Hold the button and press another button for its Hypershift action."
+                 : mouse.isHardwareOnly
                  ? "Hardware function: choose Save to Mouse to apply it. It changes the DPI stage inside the mouse, even when the app is closed."
                  : model.onboardActive
                     ? "Mouse buttons 4 and 5 stay standard clicks. Browsers may treat them as Back and Forward."
@@ -278,7 +284,7 @@ struct ActionInspector: View {
         description = ""
         keys = []
         systemShortcuts = MacSystemShortcut.preferences()
-        switch model.mapping[button] {
+        switch model.editedMapping[button] {
         case nil: kind = .original
         case .audio(let action, let label): kind = .system; system = SystemAction(audio: action); description = label ?? ""
         case .system(let action, let label): kind = .system; system = action; description = label ?? ""

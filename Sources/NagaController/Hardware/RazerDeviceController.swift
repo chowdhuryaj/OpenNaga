@@ -136,7 +136,9 @@ final class RazerDeviceController {
                     }
                     let skipped = try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
                     let note = skipped.isEmpty ? "" : " Not on this mouse, skipped: \(skipped.map(buttonName).joined(separator: ", "))."
-                    onboardMessage = "Profile \(plan.name) saved to the mouse. It keeps working after Quit.\(note)"
+                    let layerNote = OnboardProfileStore.skipsHypershift(plan, identity: transport.identity)
+                        ? " Hypershift layer not saved: not verified on this mouse." : ""
+                    onboardMessage = "Profile \(plan.name) saved to the mouse. It keeps working after Quit.\(note)\(layerNote)"
                 case .restoreOnboard:
                     try OnboardProfileStore.restore(session: session, identity: transport.identity)
                     onboardMessage = "Previous assignments restored. Software remapping is available."

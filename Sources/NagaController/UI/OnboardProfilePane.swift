@@ -4,7 +4,7 @@ struct OnboardProfilePane: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var model = WorkspaceModel.shared
     private var device: RazerDeviceController { .shared }
-    private var plan: OnboardProfilePlan { .init(name: model.profile, mapping: model.mapping) }
+    private var plan: OnboardProfilePlan { .init(name: model.profile, mapping: model.mapping, hypershift: model.hypershiftMapping) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {

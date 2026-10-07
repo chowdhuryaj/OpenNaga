@@ -16,7 +16,7 @@ enum ActionType: Equatable {
 
 enum MouseAction: String, Codable, CaseIterable {
     case browserBack, browserForward, leftClick, rightClick, middleClick, button4, button5
-    case scrollUp, scrollDown, scrollLeft, scrollRight, dpiUp, dpiDown
+    case scrollUp, scrollDown, scrollLeft, scrollRight, dpiUp, dpiDown, hypershift
 
     var title: String {
         switch self {
@@ -33,8 +33,12 @@ enum MouseAction: String, Codable, CaseIterable {
         case .scrollRight: return "Scroll right"
         case .dpiUp: return "DPI up"
         case .dpiDown: return "DPI down"
+        case .hypershift: return "Hypershift"
         }
     }
+
+    /// Stored in the mouse only; the software mapper ignores these.
+    var isHardwareOnly: Bool { [.dpiUp, .dpiDown, .hypershift].contains(self) }
 
     /// macOS browsers, except Firefox, ignore mouse buttons 4/5 for navigation.
     /// A real click would silently do nothing, so browsers get the shortcut.

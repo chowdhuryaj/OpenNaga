@@ -5,13 +5,15 @@ import Foundation
 // Naga V3 Pro cable 1532:00e7 (read 2026-10-07): same descriptors and bank layout, 33 controls.
 // It echoes the requested list size, so it needs a 34-byte request to return the whole list.
 // Profile 0 is the active view; profile 1 is the stored bank. Neither is changed here.
+// Byte 2 selects the layer: 0 normal, 1 Hypershift (V3 Pro, read 2026-10-07). In a layer 1
+// read response it is a stored flag, not an echo: 00 until the entry is written, then 01.
 struct RazerOnboardBinding: Equatable, Codable {
     let bytes: [UInt8]
     var profile: UInt8 { bytes[0] }
     var buttonID: UInt8 { bytes[1] }
 
-    init(bytes: [UInt8], profile: UInt8, buttonID: UInt8) throws {
-        guard bytes.count == 10, bytes[0] == profile, bytes[1] == buttonID, bytes[2] == 0 else {
+    init(bytes: [UInt8], profile: UInt8, buttonID: UInt8, layer: UInt8 = 0) throws {
+        guard bytes.count == 10, bytes[0] == profile, bytes[1] == buttonID, bytes[2] == 0 || bytes[2] == layer else {
             throw RazerHardwareError.malformed("Invalid hardware assignment or one that refers to another button.")
         }
         // Preserve every function byte, including unknown types. Factory keyboard
@@ -30,13 +32,15 @@ enum RazerOnboardBindings {
     static func controlCount(identity: String) -> Int {
         identity.split(separator: ":").dropFirst().first == "00e7" ? 33 : 21
     }
+    /// The Hypershift layer is verified only on the V3 Pro cable.
+    static func hasHypershift(identity: String) -> Bool { controlCount(identity: identity) == 33 }
 
-    static func readCommand(profile: UInt8, buttonID: UInt8) throws -> RazerCommand {
-        guard profile <= 1 else {
+    static func readCommand(profile: UInt8, buttonID: UInt8, layer: UInt8 = 0) throws -> RazerCommand {
+        guard profile <= 1, layer <= 1 else {
             throw RazerHardwareError.invalidValue("Only the active and stored profiles are supported.")
         }
         return RazerCommand(transaction: 0x1f, commandClass: 2, id: 0x8c,
-                            arguments: [profile, buttonID, 0, 0, 0, 0, 0, 0, 0, 0])
+                            arguments: [profile, buttonID, layer, 0, 0, 0, 0, 0, 0, 0])
     }
 
     static func decodeButtonIDs(_ bytes: [UInt8]) throws -> [UInt8] {
@@ -50,14 +54,14 @@ enum RazerOnboardBindings {
         return ids
     }
 
-    static func read(session: RazerHardwareSession, profile: UInt8) throws -> [RazerOnboardBinding] {
+    static func read(session: RazerHardwareSession, profile: UInt8, layer: UInt8 = 0) throws -> [RazerOnboardBinding] {
         // Validate the bank before any USB traffic.
-        _ = try readCommand(profile: profile, buttonID: 1)
+        _ = try readCommand(profile: profile, buttonID: 1, layer: layer)
         let count = controlCount(identity: session.transport.identity)
         let ids = try decodeButtonIDs(session.execute(getButtonIDs(size: count == 21 ? 22 : count + 1)))
         return try ids.map { id in
-            let bytes = try session.execute(readCommand(profile: profile, buttonID: id))
-            return try RazerOnboardBinding(bytes: bytes, profile: profile, buttonID: id)
+            let bytes = try session.execute(readCommand(profile: profile, buttonID: id, layer: layer))
+            return try RazerOnboardBinding(bytes: bytes, profile: profile, buttonID: id, layer: layer)
         }
     }
 }

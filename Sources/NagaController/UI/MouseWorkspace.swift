@@ -10,10 +10,17 @@ struct MouseWorkspace: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 16) {
-                    Picker("Mouse view", selection: $topView) {
-                        Text("Side").tag(false)
-                        Text("Top").tag(true)
-                    }.pickerStyle(.segmented).labelsHidden().frame(width: 232)
+                    HStack(spacing: 12) {
+                        Picker("Mouse view", selection: $topView) {
+                            Text("Side").tag(false)
+                            Text("Top").tag(true)
+                        }.pickerStyle(.segmented).labelsHidden().frame(width: 140)
+                        Picker("Layer", selection: $model.layer) {
+                            Text("Normal").tag(0)
+                            Text("Hypershift").tag(1)
+                        }.pickerStyle(.segmented).labelsHidden().frame(width: 180)
+                            .help("Hypershift: hold the ring-finger button set to Hypershift, then press another button.")
+                    }
                     MouseDiagram(selectedButton: $selectedButton, topView: topView)
                         .frame(height: max(220, min(440, geometry.size.height - 315)))
                     HStack {
@@ -44,7 +51,7 @@ struct MouseWorkspace: View {
                     .clipShape(RoundedRectangle(cornerRadius: 5))
                 VStack(alignment: .leading, spacing: 2) {
                     if index >= 13 { Text(buttonName(index)).font(.system(size: 11, weight: .medium)).lineLimit(1) }
-                    Text(model.mapping[index]?.displayName ?? "Original")
+                    Text(model.editedMapping[index]?.displayName ?? "Original")
                         .font(.system(size: 11)).foregroundStyle(index >= 13 ? .secondary : .primary)
                         .lineLimit(1)
                 }
@@ -57,8 +64,8 @@ struct MouseWorkspace: View {
                     lineWidth: model.activeButton == index ? 2 : 1))
                 .contentShape(Rectangle())
         }.buttonStyle(.plain)
-            .help("\(buttonName(index)): \(model.mapping[index]?.displayName ?? "Original")")
-            .accessibilityLabel("\(buttonName(index)), \(model.mapping[index]?.displayName ?? "Original")")
+            .help("\(buttonName(index)): \(model.editedMapping[index]?.displayName ?? "Original")")
+            .accessibilityLabel("\(buttonName(index)), \(model.editedMapping[index]?.displayName ?? "Original")")
             .accessibilityAddTraits(selectedButton == index ? [.isSelected] : [])
     }
 }
