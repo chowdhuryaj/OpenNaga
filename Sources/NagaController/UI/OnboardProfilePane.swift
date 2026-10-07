@@ -9,7 +9,7 @@ struct OnboardProfilePane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Mouse Memory").font(.title2.weight(.semibold))
-            Text("Save a profile to the Naga V2 HyperSpeed so it works even after you quit the app.")
+            Text("Save a profile to the Naga V2 HyperSpeed (not yet the V3 Pro) so it works even after you quit the app.")
                 .foregroundStyle(.secondary)
             LabeledContent("Profile to save", value: model.profile)
             if model.onboardActive {

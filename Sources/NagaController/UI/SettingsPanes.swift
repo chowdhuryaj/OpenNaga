@@ -29,7 +29,7 @@ struct SensitivityPane: View {
                         .disabled(device.isBusy)
                 }
                 if !device.isConnected {
-                    Label("Hardware control unavailable. Connect the Naga V2 HyperSpeed USB receiver.",
+                    Label("Hardware control unavailable. Connect the Naga V2 HyperSpeed receiver or the Naga V3 Pro cable.",
                           systemImage: "cable.connector").foregroundStyle(.secondary)
                 }
                 GroupBox {

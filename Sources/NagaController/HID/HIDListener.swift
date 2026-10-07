@@ -5,11 +5,8 @@ import Darwin
 final class HIDListener {
     static let shared = HIDListener()
     static let didUpdateNotification = Notification.Name("NagaHIDDidUpdate")
-    static let deviceMatchingCriteria: [[String: Int]] = [
-        [kIOHIDVendorIDKey: 0x1532],
-        [kIOHIDVendorIDKey: NagaInput.bluetoothIdentity.vendor,
-         kIOHIDProductIDKey: NagaInput.bluetoothIdentity.product]
-    ]
+    static let deviceMatchingCriteria: [[String: Int]] = [[kIOHIDVendorIDKey: 0x1532]] +
+        NagaInput.bluetoothProducts.map { [kIOHIDVendorIDKey: NagaInput.bluetoothVendor, kIOHIDProductIDKey: $0] }
     private(set) var connectedDeviceName: String?
     private(set) var transport: String?
     private(set) var lastInputDescription = "No input detected. The DPI buttons require a recognized driver report."

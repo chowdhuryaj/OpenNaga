@@ -119,6 +119,13 @@ final class RazerDeviceController {
                 connected = true
                 let session = RazerHardwareSession(transport: transport)
                 var onboardMessage: String?
+                if !transport.supportsV2OnlyFeatures {
+                    switch operation {
+                    case .onboard, .restoreOnboard, .mode:
+                        throw RazerHardwareError.invalidValue("Mouse memory and driver mode are only verified on the Naga V2 HyperSpeed receiver.")
+                    default: break
+                    }
+                }
                 switch operation {
                 case .refresh: break
                 case .dpi(let x, let y): try session.setDPI(x: x, y: y)

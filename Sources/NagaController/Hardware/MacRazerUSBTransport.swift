@@ -15,17 +15,19 @@ final class MacRazerUSBTransport: RazerTransport {
     private var device: IOHIDDevice?
     private var runLoop: CFRunLoop?
     private(set) var identity = "1532:00b4"
+    private(set) var product = 0x00b4
+    /// Onboard memory and driver mode are verified only on the V2 HyperSpeed receiver.
+    var supportsV2OnlyFeatures: Bool { product == 0x00b4 }
     private let timeout: TimeInterval = 1
 
     func open() throws {
         if device != nil { return }
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        IOHIDManagerSetDeviceMatching(manager, [
-            kIOHIDVendorIDKey: 0x1532,
-            kIOHIDProductIDKey: 0x00b4,
-            kIOHIDPrimaryUsagePageKey: 1,
-            kIOHIDPrimaryUsageKey: 2
-        ] as CFDictionary)
+        // V3 Pro cable (00e7) exposes its 90-byte feature report on UsagePage=1, Usage=3.
+        IOHIDManagerSetDeviceMatchingMultiple(manager, [
+            [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00b4, kIOHIDPrimaryUsagePageKey: 1, kIOHIDPrimaryUsageKey: 2],
+            [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00e7, kIOHIDPrimaryUsagePageKey: 1]
+        ] as CFArray)
         // CopyDevices enumerates services without opening unrelated interfaces.
         guard let candidates = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice> else {
             throw RazerHardwareError.disconnected
@@ -35,7 +37,7 @@ final class MacRazerUSBTransport: RazerTransport {
             && (IOHIDDeviceGetProperty($0, kIOHIDMaxFeatureReportSizeKey as CFString) as? NSNumber)?.intValue == 90
         }
         guard supported.count == 1, let selected = supported.first else {
-            throw RazerHardwareError.transport("USB interface missing or ambiguous. Connect a single Naga V2 HyperSpeed receiver.")
+            throw RazerHardwareError.transport("USB interface missing or ambiguous. Connect a single Naga V2 HyperSpeed receiver or Naga V3 Pro cable.")
         }
         // Serialize full sessions across diagnostic and GUI processes as well.
         let lockURL = DataFolder.file("hardware.lock")
@@ -58,7 +60,8 @@ final class MacRazerUSBTransport: RazerTransport {
         // Location is stable across reopen, unlike registry entry ID. It also
         // prevents recovery records from being applied to another USB port.
         let location = (IOHIDDeviceGetProperty(selected, kIOHIDLocationIDKey as CFString) as? NSNumber)?.uint32Value
-        identity = "1532:00b4:\(location.map(String.init) ?? String(registryID))"
+        product = IOHIDDeviceGetProperty(selected, kIOHIDProductIDKey as CFString) as? Int ?? 0
+        identity = String(format: "1532:%04x:", product) + "\(location.map(String.init) ?? String(registryID))"
     }
 
     func exchange(_ request: [UInt8]) throws -> [UInt8] {

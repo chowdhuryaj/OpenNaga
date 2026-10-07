@@ -20,6 +20,8 @@ enum InputEngineTests {
         let identities: [(Int, Int, String?, Bool)] = [
             (0x068e, 0x00b5, "Naga V2 HS", true),
             (0x068e, 0x00b5, nil, true),
+            (0x068e, 0x00e9, "Naga V3 Pro", true),
+            (0x1532, 0x00e7, nil, true),
             (0x068e, 0x0001, "Naga V2 HS", false),
             (0x068e, 0x00b4, "Razer Naga V2 HyperSpeed", false),
             (0x0001, 0x00b5, "Naga V2 HS", false),

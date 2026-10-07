@@ -21,7 +21,7 @@ private struct NagaPopover: View {
                 Image(systemName: "computermouse.fill").font(.title2).foregroundStyle(UIStyle.accent)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("OpenNaga").font(.headline)
-                    Text(model.connected ? "Naga V2 HyperSpeed" : "Mouse disconnected")
+                    Text(model.connected ? "Razer Naga" : "Mouse disconnected")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

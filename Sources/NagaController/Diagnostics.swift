@@ -4,8 +4,6 @@ import ApplicationServices
 enum NagaDiagnostics {
     static func run(verifyWrites: Bool = false, inspectOnboard: Bool = false, saveOnboard: Bool = false, restoreOnboard: Bool = false, output: URL? = nil) -> Int32 {
         var report: [String: Any] = [
-            "device": "Razer Naga V2 HyperSpeed",
-            "receiver": "1532:00b4",
             "accessibility": AXIsProcessTrusted(),
             "inputMonitoring": CGPreflightListenEventAccess(),
             "writesRequested": verifyWrites || saveOnboard || restoreOnboard
@@ -15,6 +13,11 @@ enum NagaDiagnostics {
         do {
             try transport.open()
             defer { transport.close() }
+            report["device"] = transport.supportsV2OnlyFeatures ? "Razer Naga V2 HyperSpeed" : "Razer Naga V3 Pro"
+            report["receiver"] = String(format: "1532:%04x", transport.product)
+            if !transport.supportsV2OnlyFeatures && (verifyWrites || inspectOnboard || saveOnboard || restoreOnboard) {
+                throw RazerHardwareError.invalidValue("Write checks and mouse memory are only verified on the Naga V2 HyperSpeed receiver.")
+            }
             let session = RazerHardwareSession(transport: transport)
             let snapshot = try session.readSnapshot()
             report["dpiX"] = snapshot.dpiX

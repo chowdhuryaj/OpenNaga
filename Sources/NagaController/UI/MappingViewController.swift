@@ -120,7 +120,7 @@ struct NagaWorkspace: View {
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Naga V2 HyperSpeed").font(.system(size: 12, weight: .medium))
+                    Text("Razer Naga").font(.system(size: 12, weight: .medium))
                     HStack(spacing: 6) {
                         StatusDot(active: model.connected)
                         Text(model.connected ? model.transport ?? "Connected" : "Mouse disconnected")
