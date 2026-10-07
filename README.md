@@ -5,8 +5,8 @@ Free, open-source macOS app for the Razer Naga V2 HyperSpeed, a replacement for 
 OpenNaga is an independent project, not affiliated with or endorsed by Razer. It started from [DParent10/NagaController](https://github.com/DParent10/NagaController) and has since been rewritten with a new interface, hardware control and input engine.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Documentation/screenshot-dark.png">
-  <img alt="OpenNaga settings window with the 12 side buttons assigned" src="Documentation/screenshot-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="Documentation/demo-dark.gif">
+  <img alt="OpenNaga stepping through the 12 side buttons and the top controls with their assignments" src="Documentation/demo-light.gif">
 </picture>
 
 ## Features
