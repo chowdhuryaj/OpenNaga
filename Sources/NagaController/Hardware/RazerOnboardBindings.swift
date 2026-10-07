@@ -5,15 +5,16 @@ import Foundation
 // Naga V3 Pro cable 1532:00e7 (read 2026-10-07): same descriptors and bank layout, 33 controls.
 // It echoes the requested list size, so it needs a 34-byte request to return the whole list.
 // Profile 0 is the active view; profile 1 is the stored bank. Neither is changed here.
-// Byte 2 selects the layer: 0 normal, 1 Hypershift (V3 Pro, read 2026-10-07). In a layer 1
-// read response it is a stored flag, not an echo: 00 until the entry is written, then 01.
+// Byte 2 selects the layer: 0 normal, 1 Hypershift (V3 Pro, read 2026-10-07). In a read
+// response it is a per-control flag, not an echo: 01 once that control's Hypershift entry
+// has been written, in the responses of both layers (0x40 read 01 01 in layer 0 and 1).
 struct RazerOnboardBinding: Equatable, Codable {
     let bytes: [UInt8]
     var profile: UInt8 { bytes[0] }
     var buttonID: UInt8 { bytes[1] }
 
     init(bytes: [UInt8], profile: UInt8, buttonID: UInt8, layer: UInt8 = 0) throws {
-        guard bytes.count == 10, bytes[0] == profile, bytes[1] == buttonID, bytes[2] == 0 || bytes[2] == layer else {
+        guard bytes.count == 10, bytes[0] == profile, bytes[1] == buttonID, bytes[2] <= 1 else {
             throw RazerHardwareError.malformed("Invalid hardware assignment or one that refers to another button.")
         }
         // Preserve every function byte, including unknown types. Factory keyboard

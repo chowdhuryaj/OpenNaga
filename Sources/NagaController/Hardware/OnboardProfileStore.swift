@@ -143,9 +143,10 @@ enum OnboardProfileStore {
         try JSONEncoder().encode(state).write(to: url, options: .atomic)
     }
 
-    // Byte 2 is ignored: in a layer 1 response it is a stored flag (00 untouched, 01 written).
+    // Byte 2 is ignored: in a response it is a per-control flag (01 once the control's
+    // Hypershift entry was written), in both layers.
     // A restored Hypershift entry reads 01 afterwards and cannot be reset to untouched,
-    // so comparisons check bytes 0, 1 and 3 to 9. Layer 0 reads are validated to 00.
+    // so comparisons check bytes 0, 1 and 3 to 9.
     static func same(_ a: [UInt8]?, _ b: [UInt8]) -> Bool {
         guard let a, a.count == b.count else { return false }
         return a.indices.allSatisfy { $0 == 2 || a[$0] == b[$0] }
@@ -166,6 +167,6 @@ enum OnboardProfileStore {
         var expected = bytes
         expected[0] = profile
         let actual = try session.execute(RazerOnboardBindings.readCommand(profile: profile, buttonID: bytes[1], layer: layer))
-        guard actual.count == 10, actual[2] == 0 || actual[2] == layer, same(actual, expected) else { throw RazerHardwareError.readback }
+        guard actual.count == 10, actual[2] <= 1, same(actual, expected) else { throw RazerHardwareError.readback }
     }
 }

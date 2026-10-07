@@ -43,6 +43,16 @@ enum NagaDiagnostics {
                 try OnboardProfileStore.restore(session: session, identity: transport.identity)
                 report["onboardRestoreVerified"] = true
             }
+            if inspectOnboard, RazerOnboardBindings.hasHypershift(identity: transport.identity) {
+                // Unvalidated responses for both banks and layers, so a decode failure can be diagnosed.
+                let ids = try RazerOnboardBindings.decodeButtonIDs(session.execute(RazerOnboardBindings.getButtonIDs(size: 34)))
+                for profile: UInt8 in [1, 0] { for layer: UInt8 in [0, 1] {
+                    report["rawBank\(profile)Layer\(layer)"] = try ids.map { id in
+                        try session.execute(RazerOnboardBindings.readCommand(profile: profile, buttonID: id, layer: layer))
+                            .map { String(format: "%02x", $0) }.joined(separator: " ")
+                    }
+                } }
+            }
             if inspectOnboard || saveOnboard || restoreOnboard {
                 report["onboardActive"] = try RazerOnboardBindings.read(session: session, profile: 0).map(\.bytes)
                 report["onboardStored"] = try RazerOnboardBindings.read(session: session, profile: 1).map(\.bytes)

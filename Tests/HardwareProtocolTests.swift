@@ -174,9 +174,12 @@ enum HardwareProtocolTests {
         }
         let factory: [UInt8] = [1, 64, 0, 2, 1, 0, 30, 0, 0, 0]
         try check(RazerOnboardBinding(bytes: factory, profile: 1, buttonID: 64).bytes == factory, "Preserve factory descriptor including nonstandard length")
+        // V3 Pro 2026-10-07: 0x40 read 01 in byte 2 in layer 0 after its Hypershift entry was written.
+        let flagged: [UInt8] = [1, 0x40, 1, 2, 2, 0, 0x1e, 0, 0, 0]
+        try check(RazerOnboardBinding(bytes: flagged, profile: 1, buttonID: 0x40).bytes == flagged, "Layer 0 accepts the per-control Hypershift flag")
         for field in [0, 1, 2] {
             var wrong = factory
-            wrong[field] ^= 1
+            wrong[field] ^= field == 2 ? 2 : 1
             try rejects("Onboard identity field") { _ = try RazerOnboardBinding(bytes: wrong, profile: 1, buttonID: 64) }
         }
         try rejects("Truncated onboard descriptor") { _ = try RazerOnboardBinding(bytes: Array(factory.dropLast()), profile: 1, buttonID: 64) }
