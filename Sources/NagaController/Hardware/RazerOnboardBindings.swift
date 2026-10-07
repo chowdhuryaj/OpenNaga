@@ -29,11 +29,11 @@ enum RazerOnboardBindings {
         RazerCommand(transaction: 0x1f, commandClass: 2, id: 0x84, arguments: Array(repeating: 0, count: size))
     }
 
-    /// Bindable controls per model: V2 HyperSpeed receiver 21, V3 Pro cable 33.
+    /// Bindable controls per model: V2 HyperSpeed receiver 21, V3 Pro cable or dongle 33.
     static func controlCount(identity: String) -> Int {
-        identity.split(separator: ":").dropFirst().first == "00e7" ? 33 : 21
+        ["00e7", "00e8"].contains(identity.split(separator: ":").dropFirst().first ?? "") ? 33 : 21
     }
-    /// The Hypershift layer is verified only on the V3 Pro cable.
+    /// The Hypershift layer is verified only on the V3 Pro (cable; the dongle reaches the same mouse).
     static func hasHypershift(identity: String) -> Bool { controlCount(identity: identity) == 33 }
 
     static func readCommand(profile: UInt8, buttonID: UInt8, layer: UInt8 = 0) throws -> RazerCommand {

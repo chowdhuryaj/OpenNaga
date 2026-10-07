@@ -4,8 +4,8 @@ enum NagaInput {
     // Observed on macOS over Bluetooth LE: "Naga V2 HS" 00b5, "Naga V3 Pro" 00e9.
     static let bluetoothVendor = 0x068e
     static let bluetoothProducts = [0x00b5, 0x00e9]
-    // USB: V2 HyperSpeed receiver 00b4, V3 Pro cable 00e7 (both observed). Other 1532 Nagas match by name.
-    static let usbProducts = [0x00b4, 0x00e7]
+    // USB: V2 HyperSpeed receiver 00b4, V3 Pro cable 00e7 and dongle 00e8 (all observed). Other 1532 Nagas match by name.
+    static let usbProducts = [0x00b4, 0x00e7, 0x00e8]
 
     static func isSupported(vendor: Int, product: Int, name: String?) -> Bool {
         if vendor == bluetoothVendor && bluetoothProducts.contains(product) { return true }

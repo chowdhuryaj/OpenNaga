@@ -168,6 +168,7 @@ enum HardwareProtocolTests {
         try check(RazerOnboardBindings.decodeButtonIDs(v3IDs).count == 33, "V3 Pro button enumeration")
         try check(Set(OnboardProfilePlan.buttonIDs.values).isSubset(of: Set(v3IDs.dropFirst())), "V3 Pro has every planned control")
         try check(RazerOnboardBindings.controlCount(identity: "1532:00e7:123") == 33, "V3 Pro control count")
+        try check(RazerOnboardBindings.controlCount(identity: "1532:00e8:123") == 33 && RazerOnboardBindings.hasHypershift(identity: "1532:00e8:1"), "V3 Pro dongle control count and Hypershift")
         try check(RazerOnboardBindings.controlCount(identity: "1532:00b4:123") == 21, "V2 control count")
         for invalid in [[], [0], [22] + Array(repeating: UInt8(1), count: 21), [2, 1, 1] + Array(repeating: UInt8(0), count: 19), [1] + Array(repeating: UInt8(0), count: 21)] {
             try rejects("Malformed onboard inventory") { _ = try RazerOnboardBindings.decodeButtonIDs(invalid) }

@@ -117,6 +117,8 @@ enum OnboardProfileTests {
         try check(mouse.sets.count == setCount, "Wrong receiver cannot restore")
         try check(OnboardProfileStore.sameReceiver("1532:00b4:18026496", "1532:00b4:18022400"), "Same receiver on another USB port or hub")
         try check(!OnboardProfileStore.sameReceiver("1532:00b4:18022400", "1532:00b5:18022400"), "Different receiver model is rejected")
+        try check(OnboardProfileStore.sameReceiver("1532:00e7:18092032", "1532:00e8:18100224"), "V3 Pro cable backup restores over the dongle")
+        try check(!OnboardProfileStore.sameReceiver("1532:00e8:1", "1532:00b4:1"), "V3 Pro dongle is not the V2 receiver")
         try OnboardProfileStore.restore(session: session, identity: mouse.identity, at: url)
         try check(mouse.bindings == original, "Restore recovers every original descriptor")
         try check(!FileManager.default.fileExists(atPath: url.path), "Verified restoration removes the hardware-mode gate")

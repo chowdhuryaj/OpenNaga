@@ -20,8 +20,10 @@ enum OnboardProfileStore {
 
     // The backup holds this model's original assignments, so it follows the
     // receiver model (vendor:product) rather than the USB port it was saved on.
+    // The V3 Pro cable (00e7) and dongle (00e8) reach the same mouse memory.
     static func sameReceiver(_ a: String, _ b: String) -> Bool {
-        a.split(separator: ":").prefix(2) == b.split(separator: ":").prefix(2)
+        func model(_ s: String) -> [Substring] { s.split(separator: ":").prefix(2).map { $0 == "00e8" ? "00e7" : $0 } }
+        return model(a) == model(b)
     }
 
     static func load(from url: URL) throws -> State {

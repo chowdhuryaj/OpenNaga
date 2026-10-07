@@ -23,21 +23,29 @@ final class MacRazerUSBTransport: RazerTransport {
     func open() throws {
         if device != nil { return }
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        // V3 Pro cable (00e7) exposes its 90-byte feature report on UsagePage=1, Usage=3.
+        // V3 Pro cable (00e7) and HyperSpeed dongle (00e8) expose their 90-byte feature
+        // report on UsagePage=1, Usage=3 (both seen in ioreg 2026-10-07).
         IOHIDManagerSetDeviceMatchingMultiple(manager, [
             [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00b4, kIOHIDPrimaryUsagePageKey: 1, kIOHIDPrimaryUsageKey: 2],
-            [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00e7, kIOHIDPrimaryUsagePageKey: 1]
+            [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00e7, kIOHIDPrimaryUsagePageKey: 1],
+            [kIOHIDVendorIDKey: 0x1532, kIOHIDProductIDKey: 0x00e8, kIOHIDPrimaryUsagePageKey: 1]
         ] as CFArray)
         // CopyDevices enumerates services without opening unrelated interfaces.
         guard let candidates = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice> else {
             throw RazerHardwareError.disconnected
         }
-        let supported = candidates.filter {
+        var supported = candidates.filter {
             (IOHIDDeviceGetProperty($0, kIOHIDTransportKey as CFString) as? String) == "USB"
             && (IOHIDDeviceGetProperty($0, kIOHIDMaxFeatureReportSizeKey as CFString) as? NSNumber)?.intValue == 90
         }
+        // V3 Pro cable and dongle together are one mouse; talk over the cable.
+        let cable = supported.filter { IOHIDDeviceGetProperty($0, kIOHIDProductIDKey as CFString) as? Int == 0x00e7 }
+        if cable.count == 1, supported.count == 2,
+           supported.contains(where: { IOHIDDeviceGetProperty($0, kIOHIDProductIDKey as CFString) as? Int == 0x00e8 }) {
+            supported = cable
+        }
         guard supported.count == 1, let selected = supported.first else {
-            throw RazerHardwareError.transport("USB interface missing or ambiguous. Connect a single Naga V2 HyperSpeed receiver or Naga V3 Pro cable.")
+            throw RazerHardwareError.transport("USB interface missing or ambiguous. Connect a single Naga V2 HyperSpeed receiver, or a Naga V3 Pro cable or dongle.")
         }
         // Serialize full sessions across diagnostic and GUI processes as well.
         let lockURL = DataFolder.file("hardware.lock")
