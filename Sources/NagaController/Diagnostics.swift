@@ -33,7 +33,7 @@ enum NagaDiagnostics {
                 let plan = OnboardProfilePlan(name: ConfigManager.shared.currentProfileName, mapping: ConfigManager.shared.mappingForCurrentProfile())
                 report["profile"] = plan.name
                 report["planIssues"] = plan.issues
-                try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
+                report["skippedButtons"] = try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
                 report["onboardSaveVerified"] = true
             }
             if restoreOnboard {

@@ -9,7 +9,9 @@ struct OnboardProfilePlan {
     // Grid IDs increase with the printed button numbers, not enumeration order.
     static let buttonIDs: [Int: UInt8] = Dictionary(uniqueKeysWithValues:
         (1...12).map { ($0, UInt8(0x40 + $0 - 1)) } +
-        [(13, 0x0b), (14, 0x0c), (15, 0x34), (16, 0x35), (17, 3), (18, 1), (19, 2)])
+        [(13, 0x0b), (14, 0x0c), (15, 0x34), (16, 0x35), (17, 3), (18, 1), (19, 2),
+         // 20 to 22 exist only on the V3 Pro (1532:00e7); a V2 save skips them.
+         (20, 0x6a), (21, 0x39), (22, 0x80)])
 
     init(name: String, mapping: [Int: ActionType]) {
         self.name = name

@@ -110,6 +110,14 @@ enum OnboardProfileTests {
         try rejects { try OnboardProfileStore.save(escape, session: session, identity: mouse.identity, at: url) }
         try OnboardProfileStore.restore(session: session, identity: mouse.identity, at: url)
         try check(mouse.bindings == original, "Manual recovery after interrupted writes")
+        let escapeAction = ActionType.keySequence(keys: [KeyStroke(key: "escape", modifiers: [], keyCode: 53)], description: nil)
+        let extras = OnboardProfilePlan(name: "Extras", mapping: [1: escapeAction, 20: escapeAction, 21: escapeAction, 22: escapeAction])
+        try check(extras.isSupported && [0x6a, 0x39, 0x80].allSatisfy { extras.functions[$0] == [2,2,0,41,0,0,0] }, "V3 Pro extras 20 to 22 map to 0x6a, 0x39, 0x80")
+        let setsBefore = mouse.sets.count
+        try check(OnboardProfileStore.save(extras, session: session, identity: mouse.identity, at: url) == [20, 21, 22], "V2 save skips and lists the V3-only buttons")
+        try check(mouse.sets.dropFirst(setsBefore).map { $0[1] } == [64], "V2 save writes only controls the mouse listed")
+        try OnboardProfileStore.restore(session: session, identity: mouse.identity, at: url)
+        try check(mouse.bindings == original, "Restore after a save with skipped buttons")
         return count
     }
 }

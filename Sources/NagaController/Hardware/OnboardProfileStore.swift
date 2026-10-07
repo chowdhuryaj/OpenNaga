@@ -36,7 +36,9 @@ enum OnboardProfileStore {
         return state
     }
 
-    static func save(_ plan: OnboardProfilePlan, session: RazerHardwareSession, identity: String, at url: URL = url) throws {
+    /// Returns the logical buttons skipped because this mouse does not list them.
+    @discardableResult
+    static func save(_ plan: OnboardProfilePlan, session: RazerHardwareSession, identity: String, at url: URL = url) throws -> [Int] {
         guard plan.isSupported else { throw RazerHardwareError.invalidValue(plan.issues.joined(separator: "\n")) }
         guard try session.readMode() == 0 else { throw RazerHardwareError.invalidValue("Turn off driver mode before saving to the mouse.") }
         let previousData = FileManager.default.fileExists(atPath: url.path) ? try Data(contentsOf: url) : nil
@@ -49,8 +51,10 @@ enum OnboardProfileStore {
             throw RazerHardwareError.malformed("Unexpected button layout.")
         }
         let original = previous?.original ?? before
-        guard Set(original.map { $0[1] }) == Set(before.map { $0[1] }),
-              Set(plan.functions.keys).isSubset(of: Set(before.map { $0[1] })) else {
+        let present = Set(before.map { $0[1] })
+        // Only the V3 Pro extras (20 to 22) may be missing; targets come from the mouse's own list.
+        let skipped = OnboardProfilePlan.buttonIDs.filter { plan.functions[$0.value] != nil && !present.contains($0.value) }.keys.sorted()
+        guard Set(original.map { $0[1] }) == present, skipped.allSatisfy({ $0 >= 20 }) else {
             throw RazerHardwareError.malformed("The backup or profile does not match the mouse buttons.")
         }
         let targets = original.map { bytes -> [UInt8] in
@@ -67,6 +71,7 @@ enum OnboardProfileStore {
             for target in targets { try verify(target, profile: 0, session: session) }
             state.pending = false
             try persist(state, at: url)
+            return skipped
         } catch {
             let failure = error
             do {

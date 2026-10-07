@@ -17,6 +17,10 @@ enum NagaInput {
             if (0x1e...0x27).contains(usage) { return Int(usage - 0x1e) + 1 }
             if usage == 0x2d { return 11 }
             if usage == 0x2e { return 12 }
+            // V3 Pro extra controls with their factory bindings (read 2026-10-07).
+            if usage == 0x39 { return 20 }
+            if usage == 0x49 { return 21 }
+            if usage == 0x63 { return 22 }
         }
         if page == 0x09 {
             switch usage {

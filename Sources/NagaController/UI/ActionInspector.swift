@@ -45,7 +45,7 @@ struct ActionInspector: View {
                 Text(model.mapping[button]?.displayName ?? "Original function")
                     .lineLimit(2)
             }.font(.callout).foregroundStyle(.secondary)
-            if button >= 18 {
+            if (18...19).contains(button) {
                 Label("Keep a primary click available so you can still use the Mac.", systemImage: "exclamationmark.triangle")
                     .font(.callout).foregroundStyle(.orange)
             }

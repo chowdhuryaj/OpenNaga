@@ -16,7 +16,11 @@ enum KeyCodeMapper {
         CGKeyCode(kVK_ANSI_9): 9,
         CGKeyCode(kVK_ANSI_0): 10,
         CGKeyCode(kVK_ANSI_Minus): 11,
-        CGKeyCode(kVK_ANSI_Equal): 12
+        CGKeyCode(kVK_ANSI_Equal): 12,
+        // V3 Pro extras: HID Insert arrives as Help. Caps Lock (button 20) only sends
+        // flagsChanged and toggles in the system, so it is not intercepted.
+        CGKeyCode(kVK_Help): 21,
+        CGKeyCode(kVK_ANSI_KeypadDecimal): 22
     ]
 
     static func buttonIndex(for keyCode: CGKeyCode) -> Int? {

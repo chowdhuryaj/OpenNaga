@@ -89,7 +89,7 @@ struct NagaWorkspace: View {
             model.refresh()
             let args = CommandLine.arguments
             if args.contains("--snapshot"), let index = args.firstIndex(of: "--snapshot-button"),
-               args.indices.contains(index + 1), let button = Int(args[index + 1]), (1...19).contains(button) {
+               args.indices.contains(index + 1), let button = Int(args[index + 1]), (1...22).contains(button) {
                 selectedButton = button
             }
         }
@@ -171,6 +171,10 @@ func buttonName(_ index: Int) -> String {
     case 17: return "Middle click"
     case 18: return "Left click"
     case 19: return "Right click"
+    // V3 Pro extra controls (factory keys: 20 Caps Lock, 21 Insert, 22 Keypad .).
+    case 20: return "Behind wheel (front)"
+    case 21: return "Ring finger button"
+    case 22: return "Behind wheel (rear)"
     default: return "Side button \(index)"
     }
 }

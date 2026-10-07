@@ -134,8 +134,9 @@ final class RazerDeviceController {
                     guard !FileManager.default.fileExists(atPath: journalURL.path) else {
                         throw RazerHardwareError.invalidValue("Restore the original driver mode first.")
                     }
-                    try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
-                    onboardMessage = "Profile \(plan.name) saved to the mouse. It keeps working after Quit."
+                    let skipped = try OnboardProfileStore.save(plan, session: session, identity: transport.identity)
+                    let note = skipped.isEmpty ? "" : " Not on this mouse, skipped: \(skipped.map(buttonName).joined(separator: ", "))."
+                    onboardMessage = "Profile \(plan.name) saved to the mouse. It keeps working after Quit.\(note)"
                 case .restoreOnboard:
                     try OnboardProfileStore.restore(session: session, identity: transport.identity)
                     onboardMessage = "Previous assignments restored. Software remapping is available."

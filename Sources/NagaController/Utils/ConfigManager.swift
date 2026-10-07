@@ -126,7 +126,7 @@ final class ConfigManager {
         guard let profile = profiles[currentProfileName] else { return [:] }
         var result: [Int: ActionType] = [:]
         for (key, action) in profile.buttons {
-            if let idx = Int(key), (1...19).contains(idx), let mapped = convert(action: action) {
+            if let idx = Int(key), (1...22).contains(idx), let mapped = convert(action: action) {
                 result[idx] = mapped
             }
         }
@@ -286,7 +286,7 @@ final class ConfigManager {
 
     // Update a single button's action in the current profile and refresh mapping
     func setAction(forButton index: Int, action: ActionType?) {
-        guard (1...19).contains(index) else { return }
+        guard (1...22).contains(index) else { return }
         var profile = profiles[currentProfileName] ?? Profile(buttons: [:])
         let key = String(index)
         if let action = action {

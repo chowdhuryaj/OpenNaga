@@ -17,14 +17,14 @@ struct MouseWorkspace: View {
                     MouseDiagram(selectedButton: $selectedButton, topView: topView)
                         .frame(height: max(220, min(440, geometry.size.height - 315)))
                     HStack {
-                        Text(topView ? "Top buttons" : "12-button side panel")
+                        Text(topView ? "Top and extra buttons" : "12-button side panel")
                             .font(.system(size: 12, weight: .semibold))
                         Spacer()
                         Text("Select on the photo or in the list")
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: topView ? 2 : 3), spacing: 6) {
-                        ForEach(topView ? Array(13...19) : Array(1...12), id: \.self) { index in
+                        ForEach(topView ? Array(13...22) : Array(1...12), id: \.self) { index in
                             assignment(index)
                         }
                     }
