@@ -162,6 +162,13 @@ enum HardwareProtocolTests {
         // Captured on the user's 1532:00b4 receiver, including physical grid order.
         let buttonIDs: [UInt8] = [21, 1, 2, 3, 52, 53, 11, 12, 64, 67, 70, 73, 65, 68, 71, 74, 66, 69, 72, 75, 9, 10]
         try check(RazerOnboardBindings.decodeButtonIDs(buttonIDs) == Array(buttonIDs.dropFirst()), "Captured button enumeration")
+        // Captured on a Naga V3 Pro cable 1532:00e7 with a 34-byte request.
+        let v3IDs: [UInt8] = [33, 0x01, 0x02, 0x0b, 0x0c, 0x0e, 0x03, 0x34, 0x35, 0x6a, 0x39, 0x80, 0x42, 0x41, 0x40, 0x45, 0x44, 0x43,
+                              0x48, 0x47, 0x46, 0x4b, 0x4a, 0x49, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x05, 0x04, 0x09, 0x0a]
+        try check(RazerOnboardBindings.decodeButtonIDs(v3IDs).count == 33, "V3 Pro button enumeration")
+        try check(Set(OnboardProfilePlan.buttonIDs.values).isSubset(of: Set(v3IDs.dropFirst())), "V3 Pro has every planned control")
+        try check(RazerOnboardBindings.controlCount(identity: "1532:00e7:123") == 33, "V3 Pro control count")
+        try check(RazerOnboardBindings.controlCount(identity: "1532:00b4:123") == 21, "V2 control count")
         for invalid in [[], [0], [22] + Array(repeating: UInt8(1), count: 21), [2, 1, 1] + Array(repeating: UInt8(0), count: 19), [1] + Array(repeating: UInt8(0), count: 21)] {
             try rejects("Malformed onboard inventory") { _ = try RazerOnboardBindings.decodeButtonIDs(invalid) }
         }

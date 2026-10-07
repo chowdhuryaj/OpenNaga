@@ -24,7 +24,7 @@ enum OnboardProfileStore {
 
     static func load(from url: URL) throws -> State {
         let state = try JSONDecoder().decode(State.self, from: Data(contentsOf: url))
-        guard !state.identity.isEmpty, state.original.count == 21 else {
+        guard !state.identity.isEmpty, state.original.count == RazerOnboardBindings.controlCount(identity: state.identity) else {
             throw RazerHardwareError.malformed("Incomplete mouse backup.")
         }
         var ids = Set<UInt8>()
@@ -45,7 +45,9 @@ enum OnboardProfileStore {
             throw RazerHardwareError.invalidValue("Restore the pending backup with the original receiver first.")
         }
         let before = try RazerOnboardBindings.read(session: session, profile: 1).map(\.bytes)
-        guard before.count == 21 else { throw RazerHardwareError.malformed("Unexpected button layout.") }
+        guard before.count == RazerOnboardBindings.controlCount(identity: identity) else {
+            throw RazerHardwareError.malformed("Unexpected button layout.")
+        }
         let original = previous?.original ?? before
         guard Set(original.map { $0[1] }) == Set(before.map { $0[1] }),
               Set(plan.functions.keys).isSubset(of: Set(before.map { $0[1] })) else {

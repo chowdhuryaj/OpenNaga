@@ -16,7 +16,7 @@ final class MacRazerUSBTransport: RazerTransport {
     private var runLoop: CFRunLoop?
     private(set) var identity = "1532:00b4"
     private(set) var product = 0x00b4
-    /// Onboard memory and driver mode are verified only on the V2 HyperSpeed receiver.
+    /// Driver mode and --verify-hardware are verified only on the V2 HyperSpeed receiver.
     var supportsV2OnlyFeatures: Bool { product == 0x00b4 }
     private let timeout: TimeInterval = 1
 

@@ -15,8 +15,8 @@ enum NagaDiagnostics {
             defer { transport.close() }
             report["device"] = transport.supportsV2OnlyFeatures ? "Razer Naga V2 HyperSpeed" : "Razer Naga V3 Pro"
             report["receiver"] = String(format: "1532:%04x", transport.product)
-            if !transport.supportsV2OnlyFeatures && (verifyWrites || inspectOnboard || saveOnboard || restoreOnboard) {
-                throw RazerHardwareError.invalidValue("Write checks and mouse memory are only verified on the Naga V2 HyperSpeed receiver.")
+            if !transport.supportsV2OnlyFeatures && verifyWrites {
+                throw RazerHardwareError.invalidValue("Write checks are only verified on the Naga V2 HyperSpeed receiver.")
             }
             let session = RazerHardwareSession(transport: transport)
             let snapshot = try session.readSnapshot()

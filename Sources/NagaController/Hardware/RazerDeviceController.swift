@@ -121,8 +121,8 @@ final class RazerDeviceController {
                 var onboardMessage: String?
                 if !transport.supportsV2OnlyFeatures {
                     switch operation {
-                    case .onboard, .restoreOnboard, .mode:
-                        throw RazerHardwareError.invalidValue("Mouse memory and driver mode are only verified on the Naga V2 HyperSpeed receiver.")
+                    case .mode:
+                        throw RazerHardwareError.invalidValue("Driver mode is only verified on the Naga V2 HyperSpeed receiver.")
                     default: break
                     }
                 }
