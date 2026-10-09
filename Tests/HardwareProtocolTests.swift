@@ -53,7 +53,7 @@ enum HardwareProtocolTests {
              packet([0, 0x1f, 0, 0, 0, 9, 0x0f, 2, 1, 5, 1, 0, 0, 1, 0x12, 0x34, 0x56], crc: 0x70)),
             (try .setLighting(.wheel, effect: .breathing, r: 255, g: 0, b: 128, brightness: 0)[0],
              packet([0, 0x1f, 0, 0, 0, 9, 0x0f, 2, 1, 1, 2, 1, 0, 1, 255, 0, 128], crc: 0x79)),
-            (try .setLighting(.logo, effect: .spectrum, brightness: 0)[0], packet([0, 0x1f, 0, 0, 0, 6, 0x0f, 2, 1, 4, 3], crc: 0x0d)),
+            (try .setLighting(.logo, effect: .spectrum, brightness: 0)[0], packet([0, 0x1f, 0, 0, 0, 12, 0x0f, 2, 1, 4, 3, 1, 0x28, 1, 0, 0xff, 0, 0, 0xff, 0], crc: 0x2f)),
             (try .setLighting(.wheel, effect: .off, brightness: 0)[0], packet([0, 0x1f, 0, 0, 0, 6, 0x0f, 2, 1, 1], crc: 0x0b)),
             (try .setLighting(.logo, effect: .off, brightness: 0x54)[1], packet([0, 0x1f, 0, 0, 0, 3, 0x0f, 4, 1, 4, 0x54], crc: 0x59))
         ]

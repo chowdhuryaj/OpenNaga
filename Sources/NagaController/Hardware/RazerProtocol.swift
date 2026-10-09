@@ -95,7 +95,8 @@ struct RazerCommand: Equatable {
         case .off: arguments = [1, zone.rawValue, 0, 0, 0, 0]
         case .staticColor: arguments = [1, zone.rawValue, 1, 0, 0, 1] + color
         case .breathing: arguments = [1, zone.rawValue, 2, 1, 0, 1] + color
-        case .spectrum: arguments = [1, zone.rawValue, 3, 0, 0, 0]
+        // Synapse factory bytes (speed 0x28), read back on 2026-10-08; OpenRazer sends only [1, led, 3, 0, 0, 0].
+        case .spectrum: arguments = [1, zone.rawValue, 3, 1, 0x28, 1, 0, 0xff, 0, 0, 0xff, 0]
         }
         return [Self(transaction: 0x1f, commandClass: 0x0f, id: 2, arguments: arguments),
                 Self(transaction: 0x1f, commandClass: 0x0f, id: 4, arguments: [1, zone.rawValue, UInt8(brightness)])]
