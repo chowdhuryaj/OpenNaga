@@ -148,8 +148,17 @@ final class ButtonMapper {
     }
 
     private func postKey(_ code: CGKeyCode, flags: CGEventFlags, down: Bool) {
+        guard KeyStroke.hasMacKeyCode(code) else { return } // F21 to F24 exist only in mouse memory
+        let modifier: [Int: CGEventFlags] = [kVK_Control: .maskControl, kVK_RightControl: .maskControl,
+                                             kVK_Shift: .maskShift, kVK_RightShift: .maskShift,
+                                             kVK_Option: .maskAlternate, kVK_RightOption: .maskAlternate,
+                                             kVK_Command: .maskCommand, kVK_RightCommand: .maskCommand]
         let event = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: down)
         event?.flags = flags
+        if let flag = modifier[Int(code)] {
+            event?.type = .flagsChanged
+            if down { event?.flags.insert(flag) }
+        }
         post(event)
     }
 

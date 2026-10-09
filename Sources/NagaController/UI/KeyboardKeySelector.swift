@@ -12,7 +12,7 @@ struct KeyboardKeySelector: View {
             Picker("Choose a key", selection: $group) {
                 ForEach(KeyboardKeyGroup.allCases, id: \.self) { Text($0.rawValue).tag($0) }
             }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: group == .navigation ? 4 : 6), spacing: 5) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: group == .navigation || group == .modifiers ? 4 : 6), spacing: 5) {
                 ForEach(catalog.filter { $0.group == group }) { key in
                     Button { onSelect(key) } label: {
                         Text(key.label).font(.system(size: 12, weight: .medium))
@@ -23,7 +23,7 @@ struct KeyboardKeySelector: View {
                             .clipShape(RoundedRectangle(cornerRadius: 5))
                             .overlay(RoundedRectangle(cornerRadius: 5).stroke(selectedCode == key.code ? UIStyle.accent.opacity(0.6) : UIStyle.separator))
                     }.buttonStyle(.plain)
-                        .help(key.group == .keypad ? "Keypad: \(key.label)" : key.label)
+                        .help(key.group == .keypad ? "Keypad: \(key.label)" : key.code >= 0x1000 ? "\(key.label) (mouse memory only)" : key.label)
                         .accessibilityLabel(key.group == .keypad ? "Keypad: \(key.label)" : key.label)
                         .accessibilityAddTraits(selectedCode == key.code ? [.isSelected] : [])
                 }

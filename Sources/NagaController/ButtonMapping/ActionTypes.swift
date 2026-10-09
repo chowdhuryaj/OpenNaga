@@ -119,6 +119,10 @@ extension KeyStroke {
         return fallback.split(separator: " ").map { $0.capitalized }.joined(separator: " ")
     }
 
+    /// macOS has no virtual key codes for F21 to F24; these pseudo codes (0x1000 + function number) exist only for mouse memory.
+    static let f21Code: UInt16 = 0x1015
+    static func hasMacKeyCode(_ code: UInt16) -> Bool { code < 0x1000 }
+
     static func keyCode(for key: String) -> UInt16? {
         canonicalKeyCodes[normalizeIdentifier(key)]
     }
@@ -247,6 +251,19 @@ extension KeyStroke {
         add(["f18"], code: kVK_F18)
         add(["f19"], code: kVK_F19)
         add(["f20"], code: kVK_F20)
+        add(["f21"], code: Int(f21Code))
+        add(["f22"], code: Int(f21Code) + 1)
+        add(["f23"], code: Int(f21Code) + 2)
+        add(["f24"], code: Int(f21Code) + 3)
+
+        add(["left control"], code: kVK_Control)
+        add(["left shift"], code: kVK_Shift)
+        add(["left option"], code: kVK_Option)
+        add(["left command"], code: kVK_Command)
+        add(["right control"], code: kVK_RightControl)
+        add(["right shift"], code: kVK_RightShift)
+        add(["right option"], code: kVK_RightOption)
+        add(["right command"], code: kVK_RightCommand)
 
         add(["kp0", "keypad 0"], code: kVK_ANSI_Keypad0)
         add(["kp1", "keypad 1"], code: kVK_ANSI_Keypad1)
@@ -313,7 +330,12 @@ extension KeyStroke {
         UInt16(kVK_F17): "F17",
         UInt16(kVK_F18): "F18",
         UInt16(kVK_F19): "F19",
-        UInt16(kVK_F20): "F20"
+        UInt16(kVK_F20): "F20",
+        f21Code: "F21", f21Code + 1: "F22", f21Code + 2: "F23", f21Code + 3: "F24",
+        UInt16(kVK_Control): "Left ⌃", UInt16(kVK_Shift): "Left ⇧",
+        UInt16(kVK_Option): "Left ⌥", UInt16(kVK_Command): "Left ⌘",
+        UInt16(kVK_RightControl): "Right ⌃", UInt16(kVK_RightShift): "Right ⇧",
+        UInt16(kVK_RightOption): "Right ⌥", UInt16(kVK_RightCommand): "Right ⌘"
     ]
 
     private static let modifierSymbolMap: [String: String] = [

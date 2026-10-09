@@ -99,6 +99,8 @@ struct OnboardProfilePlan {
             guard let value = bits[name.lowercased()] else { throw unsupported("modifier \(name) is not supported by the mouse.") }
             mask |= value
         }
+        // A modifier key is a modifier-only block (usage 0 in the key byte). Not yet verified on hardware.
+        if (0xE0...0xE7).contains(usage) { return [2, 2, mask | (1 << (usage - 0xE0)), 0, 0, 0, 0] }
         return [2, 2, mask, usage, 0, 0, 0]
     }
 
@@ -116,6 +118,8 @@ struct OnboardProfilePlan {
         add([114,115,116,117,119,121,124,123,125,126], startingAt: 0x49)
         add([75,67,78,69,76,83,84,85,86,87,88,89,91,92,82,65], startingAt: 0x54)
         add([105,107,113,106,64,79,80,90], startingAt: 0x68)
+        add([59,56,58,55,62,60,61,54], startingAt: 0xE0)
+        add([0x1015,0x1016,0x1017,0x1018], startingAt: 0x70)
         result[10] = 0x64
         result[81] = 0x67
         return result

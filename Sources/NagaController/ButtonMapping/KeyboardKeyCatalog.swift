@@ -6,6 +6,7 @@ enum KeyboardKeyGroup: String, CaseIterable {
     case numbers = "Numbers"
     case symbols = "Symbols"
     case navigation = "Special keys"
+    case modifiers = "Modifiers"
     case function = "Function keys"
     case keypad = "Numeric keypad"
 }
@@ -44,7 +45,8 @@ enum KeyboardKeyCatalog {
             result.append(KeyboardKey(code: 10, key: character, label: character.uppercased(), group: .symbols))
         }
         add(["space", "tab", "return", "escape", "delete", "forward delete", "left arrow", "right arrow", "up arrow", "down arrow", "home", "end", "page up", "page down"], .navigation)
-        add((1...20).map { "f\($0)" }, .function)
+        add(["left control", "left shift", "left option", "left command", "right control", "right shift", "right option", "right command"], .modifiers)
+        add((1...24).map { "f\($0)" }, .function)
         add((0...9).map { "kp\($0)" } + ["kp.", "kp+", "kp-", "kp*", "kp/", "kp=", "keypad enter"], .keypad)
         return result
     }
@@ -54,7 +56,9 @@ enum KeyboardKeyCatalog {
             "space": "Space", "tab": "Tab", "return": "Return", "escape": "Esc",
             "delete": "⌫", "forward delete": "⌦", "left arrow": "←", "right arrow": "→",
             "up arrow": "↑", "down arrow": "↓", "home": "↖", "end": "↘",
-            "page up": "Page ↑", "page down": "Page ↓", "keypad enter": "Enter"
+            "page up": "Page ↑", "page down": "Page ↓", "keypad enter": "Enter",
+            "left control": "⌃ Left", "left shift": "⇧ Left", "left option": "⌥ Left", "left command": "⌘ Left",
+            "right control": "⌃ Right", "right shift": "⇧ Right", "right option": "⌥ Right", "right command": "⌘ Right"
         ]
         if let label = labels[key] { return label }
         if key.hasPrefix("kp") { return String(key.dropFirst(2)) }

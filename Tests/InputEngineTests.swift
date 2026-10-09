@@ -202,6 +202,22 @@ enum InputEngineTests {
             let stroke = entry.stroke(modifiers: ["cmd", "shift"])
             selectedKeyMapper.updateMapping([1: .keySequence(keys: [stroke], description: nil)])
             selectedKeyMapper.handlePress(buttonIndex: 1)
+            let modifierFlag: [UInt16: CGEventFlags] = [59: .maskControl, 62: .maskControl, 56: .maskShift, 60: .maskShift,
+                                                         58: .maskAlternate, 61: .maskAlternate, 55: .maskCommand, 54: .maskCommand]
+            if !KeyStroke.hasMacKeyCode(entry.code) {
+                try check(selectedKeyEvents.isEmpty, "Picker pseudo key posts nothing: \(entry.key)")
+                selectedKeyMapper.handleRelease(buttonIndex: 1)
+                try check(selectedKeyEvents.isEmpty, "Picker pseudo key release posts nothing: \(entry.key)")
+                continue
+            }
+            if let flag = modifierFlag[entry.code] {
+                try check(selectedKeyEvents.count == 1 && selectedKeyEvents[0].type == .flagsChanged &&
+                          selectedKeyEvents[0].getIntegerValueField(.keyboardEventKeycode) == Int64(entry.code) &&
+                          selectedKeyEvents[0].flags.contains(flag), "Picker modifier press: \(entry.key)")
+                selectedKeyMapper.handleRelease(buttonIndex: 1)
+                try check(selectedKeyEvents.count == 2 && selectedKeyEvents[1].type == .flagsChanged, "Picker modifier release: \(entry.key)")
+                continue
+            }
             try check(selectedKeyEvents.count == 1 && selectedKeyEvents[0].type == .keyDown &&
                       selectedKeyEvents[0].getIntegerValueField(.keyboardEventKeycode) == Int64(entry.code) &&
                       selectedKeyEvents[0].flags.contains([.maskCommand, .maskShift]), "Picker key press: \(entry.key)")
