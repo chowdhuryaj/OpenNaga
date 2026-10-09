@@ -10,6 +10,9 @@ final class RazerDeviceController {
     private(set) var dpiY: Int?
     private(set) var pollingRate: Int?
     private(set) var batteryLevel: Int?
+    private(set) var scrollAcceleration: Bool?
+    private(set) var smartReel: Bool?
+    private(set) var lighting: [RazerLightZone: RazerLightState]?
     private(set) var driverModeEnabled = false
     private(set) var recoveryPending = false
     private(set) var statusMessage = "Connect the USB receiver and press Refresh."
@@ -23,6 +26,11 @@ final class RazerDeviceController {
     func refresh() { submit(.refresh) }
     func setDPI(x: Int, y: Int) { submit(.dpi(x, y)) }
     func setPollingRate(_ hz: Int) { submit(.polling(hz)) }
+    func setScrollAcceleration(_ on: Bool) { submit(.scrollAcceleration(on)) }
+    func setSmartReel(_ on: Bool) { submit(.smartReel(on)) }
+    func setLighting(zones: [RazerLightZone], effect: RazerLightEffect, rgb: [Int], brightness: Int) {
+        submit(.lighting(zones, effect, rgb, brightness))
+    }
     func setDriverModeEnabled(_ enabled: Bool) {
         guard !OnboardProfileStore.isActive else { return }
         submit(.mode(enabled))
@@ -48,7 +56,8 @@ final class RazerDeviceController {
     func recoverOriginalMode() { submit(.recover) }
 
     private enum Operation: Sendable {
-        case refresh, dpi(Int, Int), polling(Int), mode(Bool), restore, recover, onboard(OnboardProfilePlan), restoreOnboard
+        case refresh, dpi(Int, Int), polling(Int), scrollAcceleration(Bool), smartReel(Bool),
+             lighting([RazerLightZone], RazerLightEffect, [Int], Int), mode(Bool), restore, recover, onboard(OnboardProfilePlan), restoreOnboard
     }
     private func submit(_ operation: Operation, completion: (@MainActor @Sendable () -> Void)? = nil) {
         guard !shuttingDown || completion != nil else { return }
@@ -69,6 +78,9 @@ final class RazerDeviceController {
                 self.dpiY = outcome.snapshot?.dpiY
                 self.pollingRate = outcome.snapshot?.pollingRate
                 self.batteryLevel = outcome.snapshot?.batteryLevel
+                self.scrollAcceleration = outcome.snapshot?.scrollAcceleration
+                self.smartReel = outcome.snapshot?.smartReel
+                self.lighting = outcome.snapshot?.lighting
                 self.driverModeEnabled = outcome.snapshot?.mode == 3
                 self.recoveryPending = outcome.recoveryPending
                 self.statusMessage = outcome.message
@@ -115,6 +127,10 @@ final class RazerDeviceController {
                 // Validate user input before opening any device.
                 if case .dpi(let x, let y) = operation { _ = try RazerCommand.setDPI(x: x, y: y) }
                 if case .polling(let hz) = operation { _ = try RazerCommand.setPolling(hz) }
+                if case .lighting(let zones, let effect, let rgb, let brightness) = operation {
+                    guard rgb.count == 3, !zones.isEmpty else { throw RazerHardwareError.invalidValue("Choose a zone and a color.") }
+                    for zone in zones { _ = try RazerCommand.setLighting(zone, effect: effect, r: rgb[0], g: rgb[1], b: rgb[2], brightness: brightness) }
+                }
                 try transport.open()
                 connected = true
                 let session = RazerHardwareSession(transport: transport)
@@ -126,10 +142,21 @@ final class RazerDeviceController {
                     default: break
                     }
                 }
+                if !RazerOnboardBindings.isV3Pro(identity: transport.identity) {
+                    switch operation {
+                    case .scrollAcceleration, .smartReel, .lighting:
+                        throw RazerHardwareError.invalidValue("Scroll and lighting settings are only available on the Naga V3 Pro.")
+                    default: break
+                    }
+                }
                 switch operation {
                 case .refresh: break
                 case .dpi(let x, let y): try session.setDPI(x: x, y: y)
                 case .polling(let hz): try session.setPolling(hz)
+                case .scrollAcceleration(let on): try session.setScrollAcceleration(on)
+                case .smartReel(let on): try session.setSmartReel(on)
+                case .lighting(let zones, let effect, let rgb, let brightness):
+                    try session.setLighting(zones, effect: effect, r: rgb[0], g: rgb[1], b: rgb[2], brightness: brightness)
                 case .onboard(let plan):
                     guard !FileManager.default.fileExists(atPath: journalURL.path) else {
                         throw RazerHardwareError.invalidValue("Restore the original driver mode first.")

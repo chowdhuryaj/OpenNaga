@@ -34,7 +34,8 @@ enum RazerOnboardBindings {
         ["00e7", "00e8"].contains(identity.split(separator: ":").dropFirst().first ?? "") ? 33 : 21
     }
     /// The Hypershift layer is verified only on the V3 Pro (cable; the dongle reaches the same mouse).
-    static func hasHypershift(identity: String) -> Bool { controlCount(identity: identity) == 33 }
+    static func hasHypershift(identity: String) -> Bool { isV3Pro(identity: identity) }
+    static func isV3Pro(identity: String) -> Bool { controlCount(identity: identity) == 33 }
 
     static func readCommand(profile: UInt8, buttonID: UInt8, layer: UInt8 = 0) throws -> RazerCommand {
         guard profile <= 1, layer <= 1 else {

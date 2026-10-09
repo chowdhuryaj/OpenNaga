@@ -7,6 +7,7 @@ import Foundation
 // https://github.com/openrazer/openrazer/blob/master/driver/razercommon.c
 // https://github.com/openrazer/openrazer/pull/2850
 // Scoped to Naga V2 HyperSpeed receiver 1532:00b4, not Bluetooth.
+// Naga V3 Pro scroll and lighting commands read over the dongle 1532:00e8 on 2026-10-08.
 enum RazerHardwareError: LocalizedError {
     case invalidValue(String), malformed(String), status(UInt8), disconnected, transport(String), readback
     var errorDescription: String? {
@@ -24,6 +25,19 @@ enum RazerHardwareError: LocalizedError {
         case .readback: return "The value read back does not confirm the requested change."
         }
     }
+}
+
+enum RazerLightZone: UInt8, CaseIterable {
+    case wheel = 1, logo = 4, side = 5
+    var name: String { [Self.wheel: "Scroll wheel", .logo: "Logo", .side: "Side buttons"][self]! }
+}
+enum RazerLightEffect: UInt8, CaseIterable {
+    case off = 0, staticColor = 1, breathing = 2, spectrum = 3
+    var name: String { ["Off", "Static", "Breathing", "Spectrum"][Int(rawValue)] }
+}
+struct RazerLightState: Equatable {
+    let brightness: Int
+    let effect: UInt8
 }
 
 struct RazerCommand: Equatable {
@@ -53,6 +67,38 @@ struct RazerCommand: Equatable {
             throw RazerHardwareError.invalidValue("Allowed polling rates: 125, 500 or 1000 Hz.")
         }
         return Self(transaction: 0x1f, commandClass: 0, id: 5, arguments: [value])
+    }
+    // Scroll (class 2, V3 Pro). Scroll mode 0x94 answers status 5, so it is not implemented.
+    static let getScrollAcceleration = RazerCommand(transaction: 0x1f, commandClass: 2, id: 0x96, arguments: [1, 0])
+    static let getSmartReel = RazerCommand(transaction: 0x1f, commandClass: 2, id: 0x97, arguments: [1, 0])
+    static func setScrollAcceleration(_ on: Bool) -> Self {
+        Self(transaction: 0x1f, commandClass: 2, id: 0x16, arguments: [1, on ? 1 : 0])
+    }
+    static func setSmartReel(_ on: Bool) -> Self {
+        Self(transaction: 0x1f, commandClass: 2, id: 0x17, arguments: [1, on ? 1 : 0])
+    }
+    // Lighting (class 0x0f, V3 Pro). Storage byte 1 persists in the mouse.
+    static func getBrightness(_ zone: RazerLightZone) -> Self {
+        Self(transaction: 0x1f, commandClass: 0x0f, id: 0x84, arguments: [1, zone.rawValue, 0])
+    }
+    static func getLightEffect(_ zone: RazerLightZone) -> Self {
+        Self(transaction: 0x1f, commandClass: 0x0f, id: 0x82, arguments: [1, zone.rawValue] + [UInt8](repeating: 0, count: 10))
+    }
+    /// Effect SET followed by brightness SET. The color is used by static and breathing only.
+    static func setLighting(_ zone: RazerLightZone, effect: RazerLightEffect, r: Int = 0, g: Int = 0, b: Int = 0, brightness: Int) throws -> [Self] {
+        guard (0...255).contains(brightness), [r, g, b].allSatisfy({ (0...255).contains($0) }) else {
+            throw RazerHardwareError.invalidValue("Allowed brightness and color values: 0...255.")
+        }
+        let color = [UInt8(r), UInt8(g), UInt8(b)]
+        let arguments: [UInt8]
+        switch effect {
+        case .off: arguments = [1, zone.rawValue, 0, 0, 0, 0]
+        case .staticColor: arguments = [1, zone.rawValue, 1, 0, 0, 1] + color
+        case .breathing: arguments = [1, zone.rawValue, 2, 1, 0, 1] + color
+        case .spectrum: arguments = [1, zone.rawValue, 3, 0, 0, 0]
+        }
+        return [Self(transaction: 0x1f, commandClass: 0x0f, id: 2, arguments: arguments),
+                Self(transaction: 0x1f, commandClass: 0x0f, id: 4, arguments: [1, zone.rawValue, UInt8(brightness)])]
     }
     static func setMode(_ mode: UInt8) throws -> Self {
         guard mode == 0 || mode == 3 else { throw RazerHardwareError.invalidValue("Unsafe hardware mode.") }
@@ -105,6 +151,10 @@ struct RazerHardwareSnapshot {
     let batteryLevel: Int?
     let mode: UInt8?
     let warnings: [String]
+    // V3 Pro only; nil elsewhere or when unreadable.
+    var scrollAcceleration: Bool?
+    var smartReel: Bool?
+    var lighting: [RazerLightZone: RazerLightState]?
 }
 
 final class RazerHardwareSession {
@@ -159,11 +209,30 @@ final class RazerHardwareSession {
             return Int((Double(arguments[1]) * 100 / 255).rounded())
         }
         let mode = read("Mode", readMode)
+        var scroll: (Bool?, Bool?) = (nil, nil)
+        var lighting: [RazerLightZone: RazerLightState]?
+        if RazerOnboardBindings.isV3Pro(identity: transport.identity) {
+            scroll = (read("Scroll acceleration", readScrollAcceleration), read("Smart reel", readSmartReel))
+            lighting = read("Lighting") { Dictionary(uniqueKeysWithValues: try RazerLightZone.allCases.map { ($0, try readLighting($0)) }) }
+        }
         guard dpi != nil || polling != nil || battery != nil || mode != nil else {
             throw RazerHardwareError.transport(warnings.joined(separator: "\n"))
         }
         return RazerHardwareSnapshot(dpiX: dpi?.0, dpiY: dpi?.1, pollingRate: polling,
-                                     batteryLevel: battery, mode: mode, warnings: warnings)
+                                     batteryLevel: battery, mode: mode, warnings: warnings,
+                                     scrollAcceleration: scroll.0, smartReel: scroll.1, lighting: lighting)
+    }
+    private func readFlag(_ command: RazerCommand) throws -> Bool {
+        let a = try execute(command)
+        guard a[1] <= 1 else { throw RazerHardwareError.malformed("Unknown scroll setting value.") }
+        return a[1] == 1
+    }
+    func readScrollAcceleration() throws -> Bool { try readFlag(.getScrollAcceleration) }
+    func readSmartReel() throws -> Bool { try readFlag(.getSmartReel) }
+    func readLighting(_ zone: RazerLightZone) throws -> RazerLightState {
+        let brightness = try execute(.getBrightness(zone))[2]
+        let effect = try execute(.getLightEffect(zone))[2]
+        return RazerLightState(brightness: Int(brightness), effect: effect)
     }
     func setDPI(x: Int, y: Int) throws {
         _ = try execute(.setDPI(x: x, y: y))
@@ -177,5 +246,21 @@ final class RazerHardwareSession {
     func setMode(_ mode: UInt8) throws {
         _ = try execute(.setMode(mode))
         guard try readMode() == mode else { throw RazerHardwareError.readback }
+    }
+    func setScrollAcceleration(_ on: Bool) throws {
+        _ = try execute(.setScrollAcceleration(on))
+        guard try readScrollAcceleration() == on else { throw RazerHardwareError.readback }
+    }
+    func setSmartReel(_ on: Bool) throws {
+        _ = try execute(.setSmartReel(on))
+        guard try readSmartReel() == on else { throw RazerHardwareError.readback }
+    }
+    func setLighting(_ zones: [RazerLightZone], effect: RazerLightEffect, r: Int = 0, g: Int = 0, b: Int = 0, brightness: Int) throws {
+        guard !zones.isEmpty else { throw RazerHardwareError.invalidValue("Choose a lighting zone.") }
+        let commands = try zones.map { try RazerCommand.setLighting($0, effect: effect, r: r, g: g, b: b, brightness: brightness) }
+        for (zone, pair) in zip(zones, commands) {
+            for command in pair { _ = try execute(command) }
+            guard try readLighting(zone) == RazerLightState(brightness: brightness, effect: effect.rawValue) else { throw RazerHardwareError.readback }
+        }
     }
 }

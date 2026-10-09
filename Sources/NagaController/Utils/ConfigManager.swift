@@ -129,7 +129,7 @@ final class ConfigManager {
         guard let profile = profiles[currentProfileName] else { return [:] }
         var result: [Int: ActionType] = [:]
         for (key, action) in layer == 0 ? profile.buttons : profile.hypershift ?? [:] {
-            if let idx = Int(key), (1...22).contains(idx), let mapped = convert(action: action) {
+            if let idx = Int(key), (1...24).contains(idx), let mapped = convert(action: action) {
                 result[idx] = mapped
             }
         }
@@ -289,7 +289,7 @@ final class ConfigManager {
 
     // Update a single button's action in the current profile and refresh mapping
     func setAction(forButton index: Int, action: ActionType?, layer: Int = 0) {
-        guard (1...22).contains(index) else { return }
+        guard (1...24).contains(index) else { return }
         var profile = profiles[currentProfileName] ?? Profile(buttons: [:])
         let key = String(index)
         var buttons = layer == 0 ? profile.buttons : profile.hypershift ?? [:]

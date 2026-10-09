@@ -70,7 +70,7 @@ enum OnboardProfileStore {
         // A journal from before Hypershift support never wrote layer 1, so the fresh read is the original.
         let hyperOriginal = hyperBefore.map { previous?.hypershift ?? $0 }
         let present = Set(before.map { $0[1] })
-        // Only the V3 Pro extras (20 to 22) may be missing; targets come from the mouse's own list.
+        // Only the V3 Pro extras (20 to 22) and the wheel pair (23, 24) may be missing; targets come from the mouse's own list.
         let skipped = OnboardProfilePlan.buttonIDs.filter { plan.functions[$0.value] != nil && !present.contains($0.value) }.keys.sorted()
         guard Set(original.map { $0[1] }) == present, hyperOriginal.map({ Set($0.map { $0[1] }) == present }) ?? true,
               skipped.allSatisfy({ $0 >= 20 }) else {

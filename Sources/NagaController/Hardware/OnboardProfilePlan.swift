@@ -13,7 +13,9 @@ struct OnboardProfilePlan {
         (1...12).map { ($0, UInt8(0x40 + $0 - 1)) } +
         [(13, 0x0b), (14, 0x0c), (15, 0x34), (16, 0x35), (17, 3), (18, 1), (19, 2),
          // 20 to 22 exist only on the V3 Pro (1532:00e7); a V2 save skips them.
-         (20, 0x6a), (21, 0x39), (22, 0x80)])
+         (20, 0x6a), (21, 0x39), (22, 0x80),
+         // Wheel up/down (V3 Pro list, read 2026-10-08; the V2 list has them too).
+         (23, 0x09), (24, 0x0a)])
 
     init(name: String, mapping: [Int: ActionType], hypershift: [Int: ActionType] = [:]) {
         self.name = name

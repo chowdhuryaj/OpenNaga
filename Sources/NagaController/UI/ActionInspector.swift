@@ -49,6 +49,10 @@ struct ActionInspector: View {
                 Label("Hypershift actions work only from mouse memory (Save to Mouse).", systemImage: "memorychip")
                     .font(.callout).foregroundStyle(.secondary)
             }
+            if (23...24).contains(button) {
+                Label("Applies after Save to Mouse; OpenNaga does not remap wheel scrolling in software.", systemImage: "memorychip")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
             if (18...19).contains(button) {
                 Label("Keep a primary click available so you can still use the Mac.", systemImage: "exclamationmark.triangle")
                     .font(.callout).foregroundStyle(.orange)

@@ -31,7 +31,7 @@ struct MouseWorkspace: View {
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: topView ? 2 : 3), spacing: 6) {
-                        ForEach(topView ? Array(13...22) : Array(1...12), id: \.self) { index in
+                        ForEach(topView ? Array(13...24) : Array(1...12), id: \.self) { index in
                             assignment(index)
                         }
                     }
@@ -179,7 +179,8 @@ struct MouseDiagram: View {
         let positions: [(Int, CGFloat, CGFloat)] = [
             (13, 0.346, 0.125), (14, 0.350, 0.227),
             (18, 0.420, 0.320), (19, 0.595, 0.320),
-            (15, 0.447, 0.240), (17, 0.501, 0.240), (16, 0.555, 0.240)
+            (15, 0.447, 0.240), (17, 0.501, 0.240), (16, 0.555, 0.240),
+            (23, 0.501, 0.190), (24, 0.501, 0.290)
         ]
         return ZStack(alignment: .topLeading) {
             ForEach(positions, id: \.0) { index, x, y in

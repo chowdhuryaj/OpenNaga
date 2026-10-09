@@ -41,7 +41,21 @@ enum HardwareProtocolTests {
             (try .setPolling(500), packet([0, 0x1f, 0, 0, 0, 1, 0, 5, 2], crc: 6)),
             (try .setPolling(125), packet([0, 0x1f, 0, 0, 0, 1, 0, 5, 8], crc: 12)),
             (try .setMode(3), packet([0, 0x1f, 0, 0, 0, 2, 0, 4, 3], crc: 5)),
-            (try .setMode(0), packet([0, 0x1f, 0, 0, 0, 2, 0, 4], crc: 6))
+            (try .setMode(0), packet([0, 0x1f, 0, 0, 0, 2, 0, 4], crc: 6)),
+            (.getScrollAcceleration, packet([0, 0x1f, 0, 0, 0, 2, 2, 0x96, 1], crc: 0x97)),
+            (.getSmartReel, packet([0, 0x1f, 0, 0, 0, 2, 2, 0x97, 1], crc: 0x96)),
+            (.setScrollAcceleration(true), packet([0, 0x1f, 0, 0, 0, 2, 2, 0x16, 1, 1], crc: 0x16)),
+            (.setScrollAcceleration(false), packet([0, 0x1f, 0, 0, 0, 2, 2, 0x16, 1, 0], crc: 0x17)),
+            (.setSmartReel(true), packet([0, 0x1f, 0, 0, 0, 2, 2, 0x17, 1, 1], crc: 0x17)),
+            (.getBrightness(.logo), packet([0, 0x1f, 0, 0, 0, 3, 0x0f, 0x84, 1, 4], crc: 0x8d)),
+            (.getLightEffect(.wheel), packet([0, 0x1f, 0, 0, 0, 12, 0x0f, 0x82, 1, 1], crc: 0x81)),
+            (try .setLighting(.side, effect: .staticColor, r: 0x12, g: 0x34, b: 0x56, brightness: 0x54)[0],
+             packet([0, 0x1f, 0, 0, 0, 9, 0x0f, 2, 1, 5, 1, 0, 0, 1, 0x12, 0x34, 0x56], crc: 0x70)),
+            (try .setLighting(.wheel, effect: .breathing, r: 255, g: 0, b: 128, brightness: 0)[0],
+             packet([0, 0x1f, 0, 0, 0, 9, 0x0f, 2, 1, 1, 2, 1, 0, 1, 255, 0, 128], crc: 0x79)),
+            (try .setLighting(.logo, effect: .spectrum, brightness: 0)[0], packet([0, 0x1f, 0, 0, 0, 6, 0x0f, 2, 1, 4, 3], crc: 0x0d)),
+            (try .setLighting(.wheel, effect: .off, brightness: 0)[0], packet([0, 0x1f, 0, 0, 0, 6, 0x0f, 2, 1, 1], crc: 0x0b)),
+            (try .setLighting(.logo, effect: .off, brightness: 0x54)[1], packet([0, 0x1f, 0, 0, 0, 3, 0x0f, 4, 1, 4, 0x54], crc: 0x59))
         ]
         for (command, expected) in fixtures {
             try check(RazerReportCodec.encode(command) == expected, "Command fixture \(command)")
@@ -191,6 +205,41 @@ enum HardwareProtocolTests {
         let bindings = try RazerOnboardBindings.read(session: session, profile: 1)
         try check(bindings.count == 1 && bindings[0].bytes == factory, "Read stored descriptor")
         try check(fake.requests.allSatisfy { $0[7] & 0x80 != 0 }, "Onboard inspection never changes the mouse")
+        try check(OnboardProfilePlan.buttonIDs[23] == 0x09 && OnboardProfilePlan.buttonIDs[24] == 0x0a, "Wheel up/down map to 0x09/0x0a")
+        try check(OnboardProfilePlan(name: "t", mapping: [23: .mouse(action: .leftClick, description: nil), 24: .disabled], hypershift: [23: .mouse(action: .leftClick, description: nil)]).functions.keys.sorted() == [9, 10], "Wheel plan")
+
+        // V3 Pro scroll and lighting.
+        fake.identity = "1532:00e8:1"
+        fake.requests = []
+        fake.replies = [try reply(.setScrollAcceleration(true), [1, 1]), try reply(.getScrollAcceleration, [1, 1])]
+        try session.setScrollAcceleration(true)
+        try check(fake.requests.map { $0[7] } == [0x16, 0x96], "Scroll acceleration readback")
+        fake.replies = [try reply(.setSmartReel(false), [1, 0]), try reply(.getSmartReel, [1, 1])]
+        try rejects("smart reel readback mismatch") { try session.setSmartReel(false) }
+        fake.replies = [try reply(.getSmartReel, [1, 2])]
+        try rejects("smart reel unknown value") { _ = try session.readSmartReel() }
+        let lightSet = try RazerCommand.setLighting(.logo, effect: .spectrum, brightness: 0x54)
+        fake.requests = []
+        fake.replies = [try reply(lightSet[0], lightSet[0].arguments), try reply(lightSet[1], lightSet[1].arguments),
+                        try reply(.getBrightness(.logo), [1, 4, 0x54]), try reply(.getLightEffect(.logo), [0, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+        try session.setLighting([.logo], effect: .spectrum, brightness: 0x54)
+        try check(fake.requests.map { $0[7] } == [2, 4, 0x84, 0x82], "Lighting: effect, brightness, then readback")
+        fake.requests = []
+        fake.replies = [try reply(lightSet[0], lightSet[0].arguments), try reply(lightSet[1], lightSet[1].arguments),
+                        try reply(.getBrightness(.logo), [1, 4, 0x54]), try reply(.getLightEffect(.logo), [0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+        try rejects("lighting effect readback mismatch") { try session.setLighting([.logo], effect: .spectrum, brightness: 0x54) }
+        fake.requests = []
+        try rejects("brightness 256") { try session.setLighting([.logo], effect: .off, brightness: 256) }
+        try rejects("color 256") { try session.setLighting([.wheel, .logo], effect: .staticColor, r: 256, brightness: 1) }
+        try rejects("no zone") { try session.setLighting([], effect: .off, brightness: 1) }
+        try check(fake.requests.isEmpty, "Invalid lighting produces no IO")
+        fake.replies = [
+            try reply(.getDPI, [0, 3, 0x20, 6, 0x40, 0, 0]), goodPolling, try reply(.getBattery, [0, 255]), try reply(.getMode, [0, 0]),
+            try reply(.getScrollAcceleration, [1, 0]), try reply(.getSmartReel, [1, 1])
+        ] + (try RazerLightZone.allCases.flatMap { [try reply(.getBrightness($0), [1, $0.rawValue, 0x54]), try reply(.getLightEffect($0), [0, $0.rawValue, 1] + [UInt8](repeating: 0, count: 9))] })
+        let v3 = try session.readSnapshot()
+        try check(v3.scrollAcceleration == false && v3.smartReel == true, "V3 snapshot scroll")
+        try check(v3.lighting?[.side] == RazerLightState(brightness: 0x54, effect: 1) && v3.lighting?.count == 3, "V3 snapshot lighting")
         return passed
     }
 }

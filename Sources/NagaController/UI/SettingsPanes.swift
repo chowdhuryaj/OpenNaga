@@ -8,6 +8,10 @@ struct SensitivityPane: View {
     @State private var rate = 1000
     @State private var editedDPI = false
     @State private var editedRate = false
+    @State private var lightZone: RazerLightZone?
+    @State private var lightEffect = RazerLightEffect.staticColor
+    @State private var lightColor = Color.white
+    @State private var lightBrightness = 100.0
     private var device: RazerDeviceController { .shared }
     private var available: Bool { device.isConnected && !device.isBusy }
     private var validDPI: Bool {
@@ -73,6 +77,53 @@ struct SensitivityPane: View {
                             }.disabled(!available || device.pollingRate == nil)
                         }
                     }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                }
+                if let acceleration = device.scrollAcceleration, let reel = device.smartReel {
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Scroll wheel").font(.headline)
+                            Toggle("Scroll acceleration", isOn: Binding(get: { acceleration }, set: { device.setScrollAcceleration($0) }))
+                            Toggle("Smart reel", isOn: Binding(get: { reel }, set: { device.setSmartReel($0) }))
+                            Text("Free-spin or tactile scrolling is the button behind the wheel; it is not a software setting.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.disabled(!available).padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                if let lighting = device.lighting {
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Lighting").font(.headline)
+                            ForEach(RazerLightZone.allCases, id: \.self) { zone in
+                                let state = lighting[zone]
+                                Text("\(zone.name): \(state.flatMap { RazerLightEffect(rawValue: $0.effect)?.name } ?? "Unknown"), \(((state?.brightness ?? 0) * 100 + 127) / 255)%")
+                                    .font(.callout).foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Picker("Zone", selection: $lightZone) {
+                                    Text("All zones").tag(RazerLightZone?.none)
+                                    ForEach(RazerLightZone.allCases, id: \.self) { Text($0.name).tag(Optional($0)) }
+                                }.frame(maxWidth: 220)
+                                Picker("Effect", selection: $lightEffect) {
+                                    ForEach(RazerLightEffect.allCases, id: \.self) { Text($0.name).tag($0) }
+                                }.frame(maxWidth: 220)
+                                if lightEffect == .staticColor || lightEffect == .breathing { ColorPicker("Color", selection: $lightColor) }
+                            }
+                            HStack {
+                                Text("Brightness")
+                                Slider(value: $lightBrightness, in: 0...100).frame(maxWidth: 260)
+                                Text("\(Int(lightBrightness))%").monospacedDigit()
+                                Spacer()
+                                Button("Apply Lighting") {
+                                    let c = NSColor(lightColor).usingColorSpace(.sRGB) ?? .white
+                                    device.setLighting(zones: lightZone.map { [$0] } ?? RazerLightZone.allCases, effect: lightEffect,
+                                                       rgb: [c.redComponent, c.greenComponent, c.blueComponent].map { Int(($0 * 255).rounded()) },
+                                                       brightness: Int((lightBrightness * 255 / 100).rounded()))
+                                }.disabled(!available)
+                            }
+                            Text("Lighting is stored in the mouse and stays after you quit.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 GroupBox {
                     VStack(alignment: .leading, spacing: 12) {
